@@ -213,36 +213,6 @@ Aura
 
 ---
 
-# Example Gameplay Flow
-
-Equip a sword:
-
-```text
-Player equips sword
-     ↓
-EquipmentManagerComponent
-     ↓
-Create EquipmentInstance
-     ↓
-Grant SwordAbilitySet
-     ↓
-Spawn SwordActor
-     ↓
-Attach to character socket
-```
-
-Unequip the sword:
-
-```text
-EquipmentInstance
-     ↓
-Remove ability handles
-     ↓
-Destroy spawned actor
-```
-
----
-
 # Quick Start
 
 This section explains how to integrate the **Aura module** into a new Unreal Engine project and quickly set up a playable character using the framework.
