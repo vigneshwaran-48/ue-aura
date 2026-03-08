@@ -55,50 +55,7 @@ void UAuraInteractionComponent::ExecuteInteraction() {
     return;
   }
 
-  const TArray<FAuraInteractionOption>& Options =
-      CurrentInteractable->GetInteractionOptions();
 
-  if (Options.Num() == 0) {
-    UE_LOG(LogTemp, Warning, TEXT("No interact options found!"));
-    return;
-  }
-
-  const FAuraInteractionOption& Option = Options[0];
-
-  if (!Option.AbilityClass) {
-    UE_LOG(LogTemp, Warning, TEXT("No interact ability found!"));
-    return;
-  }
-
-  IAbilitySystemInterface* ASCInterface =
-      Cast<IAbilitySystemInterface>(GetOwner());
-
-  if (!ASCInterface) {
-    UE_LOG(LogTemp, Warning,
-           TEXT("Owner dosen't implement ability system interface!"));
-    return;
-  }
-
-  UAbilitySystemComponent* ASC = ASCInterface->GetAbilitySystemComponent();
-
-  if (!ASC) {
-    UE_LOG(LogTemp, Warning,
-           TEXT("Owner dosen't have a ability system component!"));
-    return;
-  }
-
-  FGameplayAbilitySpec* ExistingSpec =
-      ASC->FindAbilitySpecFromClass(Option.AbilityClass);
-
-  if (!ExistingSpec) {
-    ASC->GiveAbility(
-        FGameplayAbilitySpec(Option.AbilityClass, 1));
-  }
-
-  ASC->TryActivateAbilityByClass(Option.AbilityClass);
-
-  UE_LOG(LogTemp, Log, TEXT("Activated ability: %s"),
-         *Option.AbilityClass->GetName());
 }
 
 void UAuraInteractionComponent::SetCurrentInteractable(

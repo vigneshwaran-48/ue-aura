@@ -10,6 +10,22 @@ class AURA_API UAuraAbilitySystemComponent : public UAbilitySystemComponent {
   GENERATED_BODY()
 
  public:
+  virtual void AbilitySpecInputPressed(FGameplayAbilitySpec& Spec) override;
+  virtual void AbilitySpecInputReleased(FGameplayAbilitySpec& Spec) override;
+
+  virtual void ProcessAbilityInput(float DeltaTime, bool bGamePaused);
+  virtual void ClearAbilityInput();
+
   void AbilityInputTagPressed(const FGameplayTag& InputTag);
   void AbilityInputTagReleased(const FGameplayTag& InputTag);
+
+ private:
+  // Handles to abilities that had their input pressed this frame
+  TArray<FGameplayAbilitySpecHandle> InputPressedSpecHandles;
+
+  // Handles to abilities that had their input released this frame
+  TArray<FGameplayAbilitySpecHandle> InputReleasedSpecHandles;
+
+  // Handles to abilities with input currently held down
+  TArray<FGameplayAbilitySpecHandle> InputHeldSpecHandles;
 };
