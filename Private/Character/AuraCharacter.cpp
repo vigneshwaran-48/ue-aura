@@ -5,11 +5,12 @@
 #include "AuraAbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Equipment/AuraEquipmentManagerComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "Input/AuraEnhancedInputComponent.h"
 #include "Input/AuraInputConfig.h"
-#include "Equipment/AuraEquipmentManagerComponent.h"
+#include "Interaction/AuraInteractionComponent.h"
 
 AAuraCharacter::AAuraCharacter() {
   PrimaryActorTick.bCanEverTick = false;
@@ -18,6 +19,8 @@ AAuraCharacter::AAuraCharacter() {
       "AbilitySystemComponent");
   EquipmentManager = CreateDefaultSubobject<UAuraEquipmentManagerComponent>(
       "EquipmentManager");
+  InteractionComponent =
+      CreateDefaultSubobject<UAuraInteractionComponent>("InteractionComponent");
 }
 
 UAbilitySystemComponent* AAuraCharacter::GetAbilitySystemComponent() const {

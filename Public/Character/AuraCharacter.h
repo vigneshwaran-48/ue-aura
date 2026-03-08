@@ -13,6 +13,7 @@ class UAuraInputComponent;
 class UAbilitySystemComponent;
 class UInputMappingContext;
 class UAuraEquipmentManagerComponent;
+class UAuraInteractionComponent;
 
 UCLASS()
 class AURA_API AAuraCharacter : public ACharacter,
@@ -44,6 +45,12 @@ class AURA_API AAuraCharacter : public ACharacter,
   UPROPERTY(EditDefaultsOnly, Category = "Aura|Ability System")
   UAuraAbilitySet* DefaultAbilitySet;
 
+  UPROPERTY(VisibleAnywhere)
+  TObjectPtr<UAuraInteractionComponent> InteractionComponent;
+
+  UPROPERTY(VisibleAnywhere)
+  TObjectPtr<UAuraEquipmentManagerComponent> EquipmentManager;
+
  private:
 
   void InputAbilityPressed(FGameplayTag InputTag);
@@ -52,5 +59,4 @@ class AURA_API AAuraCharacter : public ACharacter,
 
   FAuraAbilitySet_GrantedHandles AbilitySetHandles;
 
-  TObjectPtr<UAuraEquipmentManagerComponent> EquipmentManager;
 };
