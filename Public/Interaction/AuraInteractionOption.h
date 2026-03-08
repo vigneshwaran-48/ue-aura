@@ -26,11 +26,17 @@ struct FAuraInteractionOption {
       EditAnywhere, BlueprintReadWrite, Category = "Interaction|Mash",
       meta = (EditCondition = "InteractionType == EAuraInteractionType::Mash",
               EditConditionHides))
-  int32 MashTarget = 5;
+  float MashIncrement = 10.f;
 
   UPROPERTY(
       EditAnywhere, BlueprintReadWrite, Category = "Interaction|Mash",
       meta = (EditCondition = "InteractionType == EAuraInteractionType::Mash",
               EditConditionHides))
-  float MashTimeLimit = 3.f;
+  float MashDecayRate = 25.f;
+
+  UPROPERTY(
+      EditAnywhere, BlueprintReadWrite, Category = "Interaction|Mash",
+      meta = (EditCondition = "InteractionType == EAuraInteractionType::Mash",
+              EditConditionHides))
+  float MashTargetProgress = 100.f;
 };
