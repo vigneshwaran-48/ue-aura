@@ -3,9 +3,9 @@
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Abilities/Tasks/AbilityTask_WaitInputPress.h"
 #include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
-#include "Interaction/AuraInteractionType.h"
-#include "Interaction/AuraInteractionOption.h"
 #include "CoreMinimal.h"
+#include "Interaction/AuraInteractionOption.h"
+#include "Interaction/AuraInteractionType.h"
 #include "AuraGameplayAbility_Interact.generated.h"
 
 class UAuraInteractionComponent;
@@ -54,10 +54,7 @@ class AURA_API UAuraGameplayAbility_Interact : public UGameplayAbility {
   void OnHoldCompleted();
 
   UFUNCTION()
-  void OnMashPressed(float TimeWaited);
-
-  UFUNCTION()
-  void OnMashTimeExpired();
+  void OnMashTick();
 
   /* ---------- Helpers ---------- */
 
@@ -74,6 +71,8 @@ class AURA_API UAuraGameplayAbility_Interact : public UGameplayAbility {
 
   bool bMashActive = false;
 
+  float MashProgress = 0.f;
+
   /* ---------- Ability Tasks ---------- */
 
   UPROPERTY()
@@ -87,4 +86,7 @@ class AURA_API UAuraGameplayAbility_Interact : public UGameplayAbility {
 
   UPROPERTY()
   TObjectPtr<UAbilityTask_WaitDelay> MashTimerTask;
+
+  UPROPERTY()
+  TObjectPtr<UAbilityTask_WaitDelay> MashTickTask;
 };

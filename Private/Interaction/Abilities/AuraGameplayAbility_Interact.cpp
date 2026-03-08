@@ -90,22 +90,16 @@ void UAuraGameplayAbility_Interact::InputPressed(
     const FGameplayAbilitySpecHandle Handle,
     const FGameplayAbilityActorInfo* ActorInfo,
     const FGameplayAbilityActivationInfo ActivationInfo) {
-  UE_LOG(LogTemp, Log, TEXT("Input pressed"));
   if (!bMashActive) return;
 
-  MashCount++;
+  MashProgress += ActiveOption.MashIncrement;
 
-  UE_LOG(LogTemp, Log, TEXT("Mash pressed! Count: %d"), MashCount);
+  UE_LOG(LogTemp, Log, TEXT("Mash pressed! Progress: %f"), MashProgress);
 
-  if (MashCount >= ActiveOption.MashTarget) {
-    UE_LOG(LogTemp, Log, TEXT("Mash interaction succeeded!"));
+  if (MashProgress >= ActiveOption.MashTargetProgress) {
     bMashActive = false;
-    MashCount = 0;
 
-    if (MashTimerTask) {
-      MashTimerTask->EndTask();
-      MashTimerTask = nullptr;
-    }
+    UE_LOG(LogTemp, Log, TEXT("Mash interaction completed!"));
 
     ExecuteInteraction();
 
@@ -124,46 +118,26 @@ void UAuraGameplayAbility_Interact::MashInteract(
     const FAuraInteractionOption& Option) {
   ActiveOption = Option;
 
-  MashCount = 0;
+  MashProgress = 0.f;
   bMashActive = true;
 
-  const float TimeLimit = Option.MashTimeLimit;
-
-  MashTimerTask = UAbilityTask_WaitDelay::WaitDelay(this, TimeLimit);
-  MashTimerTask->OnFinish.AddDynamic(
-      this, &UAuraGameplayAbility_Interact::OnMashTimeExpired);
-
-  MashTimerTask->ReadyForActivation();
+  MashTickTask = UAbilityTask_WaitDelay::WaitDelay(this, 0.1f);
+  MashTickTask->OnFinish.AddDynamic(this,
+                                    &UAuraGameplayAbility_Interact::OnMashTick);
+  MashTickTask->ReadyForActivation();
 }
 
-void UAuraGameplayAbility_Interact::OnMashTimeExpired() {
+void UAuraGameplayAbility_Interact::OnMashTick() {
   if (!bMashActive) return;
 
-  bMashActive = false;
+  MashProgress -= ActiveOption.MashDecayRate * 0.1f;
 
-  UE_LOG(LogTemp, Warning, TEXT("Mash interaction failed (time expired)"));
+  MashProgress = FMath::Max(0.f, MashProgress);
 
-  CancelAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo,
-                true);
-}
-
-void UAuraGameplayAbility_Interact::OnMashPressed(float TimeWaited) {
-  MashCount++;
-
-  UE_LOG(LogTemp, Log, TEXT("Mash pressed! Count: %d"), MashCount);
-
-  if (MashCount >= ActiveOption.MashTarget) {
-    ExecuteInteraction();
-
-    EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true,
-               false);
-    return;
-  }
-
-  WaitPressTask = UAbilityTask_WaitInputPress::WaitInputPress(this, false);
-  WaitPressTask->OnPress.AddDynamic(
-      this, &UAuraGameplayAbility_Interact::OnMashPressed);
-  WaitPressTask->ReadyForActivation();
+  MashTickTask = UAbilityTask_WaitDelay::WaitDelay(this, 0.1f);
+  MashTickTask->OnFinish.AddDynamic(this,
+                                    &UAuraGameplayAbility_Interact::OnMashTick);
+  MashTickTask->ReadyForActivation();
 }
 
 void UAuraGameplayAbility_Interact::ExecuteInteraction() {
@@ -171,11 +145,11 @@ void UAuraGameplayAbility_Interact::ExecuteInteraction() {
     UE_LOG(LogTemp, Warning, TEXT("No interaction component found!"));
   }
   if (!InteractionComponent->GetInteractableComponent()) {
-    UE_LOG(LogTemp, Warning, TEXT("No interactable component found in interaction component!"));
+    UE_LOG(LogTemp, Warning,
+           TEXT("No interactable component found in interaction component!"));
   }
   if (InteractionComponent &&
       InteractionComponent->GetInteractableComponent()) {
-
     UE_LOG(LogTemp, Log, TEXT("Interacting with interactable!"));
     InteractionComponent->GetInteractableComponent()->Interact(
         GetOwningActorFromActorInfo());
