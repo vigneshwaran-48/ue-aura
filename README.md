@@ -19,7 +19,6 @@ Aura focuses on:
 * Data-driven design
 * Reusable architecture
 * Clean GAS integration
-* Minimal engine dependencies
 
 ---
 
