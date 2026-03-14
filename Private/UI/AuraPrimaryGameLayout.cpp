@@ -1,15 +1,23 @@
 #include "UI/AuraPrimaryGameLayout.h"
 
-#include "UI/AuraUITags.h"
-#include "Widgets/CommonActivatableWidgetContainer.h"
+#include "Blueprint/WidgetTree.h"
+#include "UI/AuraTaggedWidgetStack.h"
 
 void UAuraPrimaryGameLayout::NativeConstruct() {
   Super::NativeConstruct();
 
-  LayerMap.Add(FAuraUITags::UI_Layer_Game, GameStack);
-  LayerMap.Add(FAuraUITags::UI_Layer_HUD, HUDStack);
-  LayerMap.Add(FAuraUITags::UI_Layer_Menu, MenuStack);
-  LayerMap.Add(FAuraUITags::UI_Layer_Modal, ModalStack);
+  LayerMap.Empty();
+
+  TArray<UWidget*> AllWidgets;
+  WidgetTree->GetAllWidgets(AllWidgets);
+
+  for (UWidget* Widget : AllWidgets) {
+    UAuraTaggedWidgetStack* Stack = Cast<UAuraTaggedWidgetStack>(Widget);
+
+    if (Stack && Stack->LayerTag.IsValid()) {
+      LayerMap.Add(Stack->LayerTag, Stack);
+    }
+  }
 }
 
 UCommonActivatableWidget* UAuraPrimaryGameLayout::PushWidgetToLayer(
@@ -18,7 +26,5 @@ UCommonActivatableWidget* UAuraPrimaryGameLayout::PushWidgetToLayer(
     return nullptr;
   }
 
-  UCommonActivatableWidgetStack* Stack = LayerMap[LayerTag];
-
-  return Stack->AddWidget(WidgetClass);
+  return LayerMap[LayerTag]->AddWidget(WidgetClass);
 }

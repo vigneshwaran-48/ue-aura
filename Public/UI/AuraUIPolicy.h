@@ -5,20 +5,19 @@
 #include "AuraUIPolicy.generated.h"
 
 class UAuraPrimaryGameLayout;
+class APlayerController;
 
 UCLASS()
 class AURA_API UAuraUIPolicy : public UObject {
   GENERATED_BODY()
 
  public:
-  void Initialize(APlayerController* PC);
+  void Initialize(APlayerController* PlayerController,
+                  TSubclassOf<UAuraPrimaryGameLayout> LayoutClass);
 
   UAuraPrimaryGameLayout* GetRootLayout() const;
 
  private:
   UPROPERTY()
-  UAuraPrimaryGameLayout* RootLayout;
-
-  UPROPERTY(EditDefaultsOnly)
-  TSubclassOf<UAuraPrimaryGameLayout> LayoutClass;
+  TObjectPtr<UAuraPrimaryGameLayout> RootLayout;
 };

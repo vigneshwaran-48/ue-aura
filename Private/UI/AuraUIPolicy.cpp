@@ -1,20 +1,11 @@
 #include "UI/AuraUIPolicy.h"
 
-#include "Blueprint/UserWidget.h"
-#include "GameFramework/PlayerController.h"
 #include "UI/AuraPrimaryGameLayout.h"
-#include "UI/AuraUISettings.h"
 
-void UAuraUIPolicy::Initialize(APlayerController* PlayerController) {
-  if (!PlayerController) {
-    return;
-  }
-
-  const UAuraUISettings* Settings = GetDefault<UAuraUISettings>();
-
-  if (!Settings || !Settings->PrimaryGameLayoutClass) {
-    UE_LOG(LogTemp, Error,
-           TEXT("AuraUIPolicy: PrimaryGameLayoutClass not set in settings"));
+void UAuraUIPolicy::Initialize(
+    APlayerController* PlayerController,
+    TSubclassOf<UAuraPrimaryGameLayout> LayoutClass) {
+  if (!PlayerController || !LayoutClass) {
     return;
   }
 
@@ -22,15 +13,13 @@ void UAuraUIPolicy::Initialize(APlayerController* PlayerController) {
     return;
   }
 
-  RootLayout = CreateWidget<UAuraPrimaryGameLayout>(
-      PlayerController, Settings->PrimaryGameLayoutClass);
+  RootLayout =
+      CreateWidget<UAuraPrimaryGameLayout>(PlayerController, LayoutClass);
 
-  if (!RootLayout) {
-    UE_LOG(LogTemp, Error, TEXT("AuraUIPolicy: Failed to create RootLayout"));
-    return;
+  if (RootLayout) {
+    RootLayout->AddToViewport();
+    UE_LOG(LogTemp, Warning, TEXT("Aura UI Root Layout Created"));
   }
-
-  RootLayout->AddToViewport();
 }
 
 UAuraPrimaryGameLayout* UAuraUIPolicy::GetRootLayout() const {

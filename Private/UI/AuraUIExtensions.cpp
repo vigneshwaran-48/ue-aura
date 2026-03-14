@@ -32,11 +32,5 @@ UCommonActivatableWidget* UAuraUIExtensions::PushWidgetToLayer(
     return nullptr;
   }
 
-  UAuraPrimaryGameLayout* RootLayout = UISubsystem->GetRootLayout();
-
-  if (!RootLayout) {
-    return nullptr;
-  }
-
-  return RootLayout->PushWidgetToLayer(LayerTag, WidgetClass);
+  return UISubsystem->PushWidgetToLayer(LayerTag, WidgetClass);
 }

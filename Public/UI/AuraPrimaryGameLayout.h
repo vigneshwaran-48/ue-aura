@@ -1,13 +1,14 @@
 #pragma once
 
-#include "CommonActivatableWidget.h"
+#include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "UI/AuraActivatableWidget.h"
 #include "AuraPrimaryGameLayout.generated.h"
 
-class UCommonActivatableWidgetStack;
+class UAuraTaggedWidgetStack;
 
 UCLASS()
-class AURA_API UAuraPrimaryGameLayout : public UCommonActivatableWidget {
+class AURA_API UAuraPrimaryGameLayout : public UAuraActivatableWidget {
   GENERATED_BODY()
 
  public:
@@ -17,18 +18,7 @@ class AURA_API UAuraPrimaryGameLayout : public UCommonActivatableWidget {
  protected:
   virtual void NativeConstruct() override;
 
-  UPROPERTY(meta = (BindWidget))
-  UCommonActivatableWidgetStack* GameStack;
-
-  UPROPERTY(meta = (BindWidget))
-  UCommonActivatableWidgetStack* HUDStack;
-
-  UPROPERTY(meta = (BindWidget))
-  UCommonActivatableWidgetStack* MenuStack;
-
-  UPROPERTY(meta = (BindWidget))
-  UCommonActivatableWidgetStack* ModalStack;
-
  private:
-  TMap<FGameplayTag, UCommonActivatableWidgetStack*> LayerMap;
+  UPROPERTY()
+  TMap<FGameplayTag, UAuraTaggedWidgetStack*> LayerMap;
 };
