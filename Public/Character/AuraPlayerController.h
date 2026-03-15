@@ -3,12 +3,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/AuraUILayoutEntry.h"
+#include "CommonPlayerController.h"
 #include "AuraPlayerController.generated.h"
 
 class UAuraAbilitySystemComponent;
 
 UCLASS()
-class AURA_API AAuraPlayerController : public APlayerController {
+class AURA_API AAuraPlayerController : public ACommonPlayerController {
   GENERATED_BODY()
 
  public:
@@ -16,7 +17,7 @@ class AURA_API AAuraPlayerController : public APlayerController {
       const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
   // Called after input is processed each frame
-  virtual void PostProcessInput(float DeltaTime, bool bGamePaused) override;
+  // virtual void PostProcessInput(float DeltaTime, bool bGamePaused) override;
 
  protected:
   // Helper: get ASC from controlled pawn

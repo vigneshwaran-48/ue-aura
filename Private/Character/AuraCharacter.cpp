@@ -3,6 +3,8 @@
 #include "AbilitySystem/AuraAbilitySet.h"
 #include "AbilitySystemComponent.h"
 #include "AuraAbilitySystemComponent.h"
+#include "AuraGameplayTags.h"
+#include "CommonUIExtensions.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Equipment/AuraEquipmentManagerComponent.h"
@@ -11,6 +13,7 @@
 #include "Input/AuraEnhancedInputComponent.h"
 #include "Input/AuraInputConfig.h"
 #include "Interaction/AuraInteractionComponent.h"
+#include "UI/AuraHUDLayout.h"
 
 AAuraCharacter::AAuraCharacter() {
   PrimaryActorTick.bCanEverTick = false;
@@ -71,4 +74,30 @@ void AAuraCharacter::InputAbilityReleased(FGameplayTag InputTag) {
   if (AbilitySystemComponent) {
     AbilitySystemComponent->AbilityInputTagReleased(InputTag);
   }
+}
+
+void AAuraCharacter::PossessedBy(AController* NewController) {
+  Super::PossessedBy(NewController);
+
+  UE_LOG(LogTemp, Log, TEXT("Inside character possessedby"));
+
+  const APlayerController* PC = Cast<APlayerController>(NewController);
+  if (ensure(PC)) {
+    // Add HUD Layout widget to the player's Game UI Layer
+    UE_LOG(LogTemp, Log, TEXT("Pushing Game HUD [%s] to UI"),
+           *GetNameSafe(HUDLayoutClass));
+    HUDLayoutWidget = UCommonUIExtensions::PushContentToLayer_ForPlayer(
+        PC->GetLocalPlayer(), TAG_UI_Layer_Game, HUDLayoutClass);
+  }
+}
+
+void AAuraCharacter::UnPossessed() {
+  // Remove any HUD we added to the player's UI
+  if (HUDLayoutWidget.IsValid()) {
+    UE_LOG(LogTemp, Log, TEXT("Cleaning up HUD Layout Widget"));
+    UCommonUIExtensions::PopContentFromLayer(HUDLayoutWidget.Get());
+    HUDLayoutWidget.Reset();
+  }
+
+  Super::UnPossessed();
 }

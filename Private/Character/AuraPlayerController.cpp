@@ -2,6 +2,8 @@
 
 #include "AbilitySystemInterface.h"
 #include "AuraAbilitySystemComponent.h"
+#include "CommonLocalPlayer.h"
+#include "PrimaryGameLayout.h"
 #include "UI/AuraUIExtensions.h"
 
 AAuraPlayerController::AAuraPlayerController(
@@ -11,22 +13,35 @@ AAuraPlayerController::AAuraPlayerController(
 void AAuraPlayerController::BeginPlay() {
   Super::BeginPlay();
 
-  for (const FAuraUILayoutEntry& Entry : InitialUILayouts) {
-    if (!Entry.WidgetClass) continue;
+#if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT
+  /*
+   * The code inside this debug block isn't really required for this to work.
+   * However, it can be easy to miss these setup steps, so here are some
+   * extra checks to ensure the INI is correctly configured.
+   */
 
-    UAuraUIExtensions::PushWidgetToLayer(this, Entry.LayerTag,
-                                         Entry.WidgetClass);
-  }
+  // CommonGame requires that the LocalPlayer is a UCommonLocalPlayer
+  const UCommonLocalPlayer* LocalPlayer =
+      Cast<UCommonLocalPlayer>(GetLocalPlayer());
+  ensureAlwaysMsgf(IsValid(LocalPlayer),
+                   TEXT("LocalPlayer must be derived from UCommonLocalPlayer; "
+                        "fix INI and restart"));
+
+  // Make sure we're configured with a valid RootUILayout
+  const UPrimaryGameLayout* RootUILayout = LocalPlayer->GetRootUILayout();
+  ensureAlwaysMsgf(IsValid(RootUILayout),
+                   TEXT("RootUILayout must be configured in project settings"));
+#endif
 }
 
-void AAuraPlayerController::PostProcessInput(float DeltaTime,
-                                             bool bGamePaused) {
-  Super::PostProcessInput(DeltaTime, bGamePaused);
-
-  if (UAuraAbilitySystemComponent* ASC = GetAbilitySystemComponent()) {
-    ASC->ProcessAbilityInput(DeltaTime, bGamePaused);
-  }
-}
+// void AAuraPlayerController::PostProcessInput(float DeltaTime,
+//                                              bool bGamePaused) {
+//   Super::PostProcessInput(DeltaTime, bGamePaused);
+//
+//   if (UAuraAbilitySystemComponent* ASC = GetAbilitySystemComponent()) {
+//     ASC->ProcessAbilityInput(DeltaTime, bGamePaused);
+//   }
+// }
 
 UAuraAbilitySystemComponent* AAuraPlayerController::GetAbilitySystemComponent()
     const {

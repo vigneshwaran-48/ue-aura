@@ -14,6 +14,8 @@ class UAbilitySystemComponent;
 class UInputMappingContext;
 class UAuraEquipmentManagerComponent;
 class UAuraInteractionComponent;
+class UCommonActivatableWidget;
+class UAuraHUDLayout;
 
 UCLASS()
 class AURA_API AAuraCharacter : public ACharacter,
@@ -27,6 +29,10 @@ class AURA_API AAuraCharacter : public ACharacter,
 
  protected:
   virtual void BeginPlay() override;
+
+  virtual void PossessedBy(AController* NewController) override;
+
+  virtual void UnPossessed() override;
 
   virtual void SetupPlayerInputComponent(
       UInputComponent* PlayerInputComponent) override;
@@ -50,6 +56,14 @@ class AURA_API AAuraCharacter : public ACharacter,
 
   UPROPERTY(VisibleAnywhere)
   TObjectPtr<UAuraEquipmentManagerComponent> EquipmentManager;
+
+  /** The HUD Layout widget to use (must be derived from Aura HUD Layout) */
+  UPROPERTY(EditDefaultsOnly, DisplayName = "Aura|HUD Layout")
+  TSubclassOf<UAuraHUDLayout> HUDLayoutClass;
+
+  /** Used to keep track of the widget that was created to be our HUD */
+  UPROPERTY(Transient, VisibleInstanceOnly)
+  TWeakObjectPtr<UCommonActivatableWidget> HUDLayoutWidget;
 
  private:
 
