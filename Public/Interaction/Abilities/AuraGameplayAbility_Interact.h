@@ -9,6 +9,7 @@
 #include "AuraGameplayAbility_Interact.generated.h"
 
 class UAuraInteractionComponent;
+class UAuraInteractableComponent;
 
 /**
  * Handles player interaction input.
@@ -89,4 +90,7 @@ class AURA_API UAuraGameplayAbility_Interact : public UGameplayAbility {
 
   UPROPERTY()
   TObjectPtr<UAbilityTask_WaitDelay> MashTickTask;
+
+ private:
+  TObjectPtr<UAuraInteractableComponent> InteractableComponent;
 };

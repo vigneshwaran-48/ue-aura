@@ -26,16 +26,16 @@ void UAuraGameplayAbility_Interact::ActivateAbility(
     return;
   }
 
-  InteractionComponent->UpdateInteractionTarget();
+  InteractableComponent = InteractionComponent->GetInteractableComponent();
 
-  if (!InteractionComponent->GetInteractableComponent()) {
+  if (!InteractableComponent) {
     UE_LOG(LogTemp, Warning, TEXT("No interactable found!"));
     EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
     return;
   }
 
   TArray<FAuraInteractionOption> Options =
-      InteractionComponent->GetInteractableComponent()->GetInteractionOptions();
+      InteractableComponent->GetInteractionOptions();
 
   if (Options.Num() == 0) {
     UE_LOG(LogTemp, Warning, TEXT("No interact options found!"));
@@ -141,18 +141,9 @@ void UAuraGameplayAbility_Interact::OnMashTick() {
 }
 
 void UAuraGameplayAbility_Interact::ExecuteInteraction() {
-  if (!InteractionComponent) {
-    UE_LOG(LogTemp, Warning, TEXT("No interaction component found!"));
-  }
-  if (!InteractionComponent->GetInteractableComponent()) {
-    UE_LOG(LogTemp, Warning,
-           TEXT("No interactable component found in interaction component!"));
-  }
-  if (InteractionComponent &&
-      InteractionComponent->GetInteractableComponent()) {
+  if (InteractableComponent) {
     UE_LOG(LogTemp, Log, TEXT("Interacting with interactable!"));
-    InteractionComponent->GetInteractableComponent()->Interact(
-        GetOwningActorFromActorInfo());
+    InteractableComponent->Interact(GetOwningActorFromActorInfo());
   }
 }
 

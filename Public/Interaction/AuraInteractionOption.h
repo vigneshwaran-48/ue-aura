@@ -12,6 +12,12 @@ struct FAuraInteractionOption {
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
   EAuraInteractionType InteractionType = EAuraInteractionType::Instant;
 
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
+  FText InteractionText;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
+  TObjectPtr<UTexture2D> Icon;
+
   /* ---------------- Hold ---------------- */
 
   UPROPERTY(
