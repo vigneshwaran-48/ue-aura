@@ -12,7 +12,6 @@ class AURA_API UAuraInteractionComponent : public UActorComponent {
   GENERATED_BODY()
 
  public:
-  void UpdateInteractionTarget();
   void ExecuteInteraction();
   AActor* GetInteractableActor() const;
   UAuraInteractableComponent* GetInteractableComponent() const;
@@ -26,12 +25,31 @@ class AURA_API UAuraInteractionComponent : public UActorComponent {
   UPROPERTY()
   TObjectPtr<UAuraInteractableComponent> PreviousInteractable;
 
+  UPROPERTY()
+  TArray<TObjectPtr<UAuraInteractableComponent>> NearbyInteractables;
+
+  void SetCurrentInteractable(UAuraInteractableComponent* NewInteractable);
+
+  void UpdateHighlights(
+      const TArray<UAuraInteractableComponent*>& NewInteractables);
+
+  void ScanInteractables();
+
+  void UpdateCurrentTarget();
+
+  void BroadcastInteractionMessage();
+
   UPROPERTY(EditAnywhere, Category = "Interaction")
   float TraceDistance = 500.f;
 
   UPROPERTY(EditAnywhere, Category = "Interaction")
   float TraceRadius = 30.f;
 
- private:
-  void SetCurrentInteractable(UAuraInteractableComponent* NewInteractable);
+  UPROPERTY(EditAnywhere, Category = "Interaction")
+  float ScanInterval = 0.1f;
+
+  UPROPERTY(EditAnywhere, Category = "Interaction")
+  float ScanRadius = 200.f;
+
+  FTimerHandle ScanTimer;
 };

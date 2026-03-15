@@ -2,12 +2,29 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
+#include "AuraGameplayTags.h"
+#include "CollisionQueryParams.h"
+#include "Components/PrimitiveComponent.h"
+#include "DrawDebugHelpers.h"
+#include "Engine/OverlapResult.h"
+#include "Engine/World.h"
+#include "GameFramework/Actor.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "Interaction/Abilities/AuraGameplayAbility_Interactable.h"
 #include "Interaction/AuraInteractableComponent.h"
+#include "Interaction/AuraInteractionMessage.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "TimerManager.h"
 
-void UAuraInteractionComponent::BeginPlay() { Super::BeginPlay(); }
+void UAuraInteractionComponent::BeginPlay() {
+  Super::BeginPlay();
 
-void UAuraInteractionComponent::UpdateInteractionTarget() {
+  GetWorld()->GetTimerManager().SetTimer(
+      ScanTimer, this, &UAuraInteractionComponent::ScanInteractables,
+      ScanInterval, true);
+}
+
+void UAuraInteractionComponent::UpdateCurrentTarget() {
   AActor* OwnerActor = GetOwner();
   if (!OwnerActor) return;
 
@@ -22,23 +39,23 @@ void UAuraInteractionComponent::UpdateInteractionTarget() {
 
   FCollisionShape Sphere = FCollisionShape::MakeSphere(TraceRadius);
 
-  bool bHit = GetWorld()->SweepMultiByChannel(
-      Hits, Start, End, FQuat::Identity,
-      /* Interactable Channel */ ECC_GameTraceChannel1, Sphere);
+  bool bHit = GetWorld()->SweepMultiByChannel(Hits, Start, End, FQuat::Identity,
+                                              ECC_GameTraceChannel1, Sphere);
 
   UAuraInteractableComponent* FoundInteractable = nullptr;
 
   if (bHit) {
     for (const FHitResult& Hit : Hits) {
-      if (!Hit.GetActor()) continue;
+      AActor* HitActor = Hit.GetActor();
+      if (!HitActor) continue;
 
       UAuraInteractableComponent* Interactable =
-          Hit.GetActor()->FindComponentByClass<UAuraInteractableComponent>();
+          HitActor->FindComponentByClass<UAuraInteractableComponent>();
 
       if (Interactable) {
 #if WITH_EDITOR
-        DrawDebugSphere(GetWorld(), End, TraceRadius, 16, FColor::Green, false,
-                        0.1f);
+        DrawDebugSphere(GetWorld(), Hit.Location, TraceRadius, 16,
+                        FColor::Green, false, 0.1f);
 #endif
         FoundInteractable = Interactable;
         break;
@@ -49,15 +66,6 @@ void UAuraInteractionComponent::UpdateInteractionTarget() {
   SetCurrentInteractable(FoundInteractable);
 }
 
-void UAuraInteractionComponent::ExecuteInteraction() {
-  if (!CurrentInteractable) {
-    UE_LOG(LogTemp, Warning, TEXT("No interactable found!"));
-    return;
-  }
-
-
-}
-
 void UAuraInteractionComponent::SetCurrentInteractable(
     UAuraInteractableComponent* NewInteractable) {
   if (CurrentInteractable == NewInteractable) return;
@@ -66,12 +74,13 @@ void UAuraInteractionComponent::SetCurrentInteractable(
   CurrentInteractable = NewInteractable;
 
   if (PreviousInteractable) {
-    // TODO: OnFocusLost
+    PreviousInteractable->OnFocusLost.Broadcast();
   }
 
   if (CurrentInteractable) {
-    // TODO: OnFocusGained
+    CurrentInteractable->OnFocusGained.Broadcast();
   }
+  BroadcastInteractionMessage();
 }
 
 AActor* UAuraInteractionComponent::GetInteractableActor() const {
@@ -83,4 +92,81 @@ AActor* UAuraInteractionComponent::GetInteractableActor() const {
 UAuraInteractableComponent*
 UAuraInteractionComponent::GetInteractableComponent() const {
   return CurrentInteractable;
+}
+
+void UAuraInteractionComponent::ScanInteractables() {
+  AActor* OwnerActor = GetOwner();
+  if (!OwnerActor) return;
+
+  UWorld* World = GetWorld();
+  if (!World) return;
+
+  TArray<FOverlapResult> Overlaps;
+
+  FCollisionShape Sphere = FCollisionShape::MakeSphere(ScanRadius);
+
+  FCollisionQueryParams Params;
+  Params.AddIgnoredActor(OwnerActor);
+
+  bool bHit = World->OverlapMultiByObjectType(
+      Overlaps, OwnerActor->GetActorLocation(), FQuat::Identity,
+      FCollisionObjectQueryParams(ECC_WorldDynamic), Sphere, Params);
+
+  TArray<UAuraInteractableComponent*> FoundInteractables;
+
+  if (bHit) {
+    for (const FOverlapResult& Result : Overlaps) {
+      UPrimitiveComponent* Primitive = Result.Component.Get();
+      if (!Primitive) continue;
+
+      AActor* HitActor = Primitive->GetOwner();
+      if (!HitActor) continue;
+
+      UAuraInteractableComponent* Interactable =
+          HitActor->FindComponentByClass<UAuraInteractableComponent>();
+
+      if (Interactable) {
+        FoundInteractables.Add(Interactable);
+      }
+    }
+  }
+
+  UpdateHighlights(FoundInteractables);
+
+  UpdateCurrentTarget();
+}
+
+void UAuraInteractionComponent::UpdateHighlights(
+    const TArray<UAuraInteractableComponent*>& NewInteractables) {
+  for (UAuraInteractableComponent* Old : NearbyInteractables) {
+    if (!NewInteractables.Contains(Old)) {
+      Old->OnDisableHighlight.Broadcast();
+    }
+  }
+
+  for (UAuraInteractableComponent* New : NewInteractables) {
+    if (!NearbyInteractables.Contains(New)) {
+      New->OnHighlight.Broadcast();
+    }
+  }
+
+  NearbyInteractables = NewInteractables;
+}
+
+void UAuraInteractionComponent::BroadcastInteractionMessage() {
+  FAuraInteractionMessage Message;
+
+  if (CurrentInteractable) {
+    Message.TargetActor = CurrentInteractable->GetOwner();
+    Message.InteractableComponent = CurrentInteractable;
+    Message.InteractionOption = CurrentInteractable->GetInteractionOptions()[0];
+  }
+
+  UGameplayMessageSubsystem& Subsystem = UGameplayMessageSubsystem::Get(this);
+
+  Subsystem.BroadcastMessage(TAG_Aura_Message_Interaction_TargetChanged,
+                             Message);
+
+  UE_LOG(LogTemp, Log, TEXT("Broadcasting interaction message with target: %s"),
+         *GetNameSafe(Message.TargetActor));
 }
