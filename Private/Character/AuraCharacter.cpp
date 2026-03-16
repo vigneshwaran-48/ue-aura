@@ -16,7 +16,7 @@
 #include "UI/AuraHUDLayout.h"
 
 AAuraCharacter::AAuraCharacter() {
-  PrimaryActorTick.bCanEverTick = false;
+  PrimaryActorTick.bCanEverTick = true;
 
   AbilitySystemComponent = CreateDefaultSubobject<UAuraAbilitySystemComponent>(
       "AbilitySystemComponent");
@@ -100,4 +100,12 @@ void AAuraCharacter::UnPossessed() {
   }
 
   Super::UnPossessed();
+}
+
+void AAuraCharacter::Tick(float DeltaTime) {
+  Super::Tick(DeltaTime);
+
+  if (AbilitySystemComponent && IsLocallyControlled()) {
+    AbilitySystemComponent->ProcessAbilityInput(DeltaTime, false);
+  }
 }

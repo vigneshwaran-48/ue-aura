@@ -37,6 +37,8 @@ class AURA_API AAuraCharacter : public ACharacter,
   virtual void SetupPlayerInputComponent(
       UInputComponent* PlayerInputComponent) override;
 
+  virtual void Tick(float DeltaTime) override;
+
  protected:
 
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Aura|GAS")
