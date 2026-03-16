@@ -16,9 +16,6 @@ class AURA_API AAuraPlayerController : public ACommonPlayerController {
   AAuraPlayerController(
       const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-  // Called after input is processed each frame
-  // virtual void PostProcessInput(float DeltaTime, bool bGamePaused) override;
-
  protected:
   // Helper: get ASC from controlled pawn
   class UAuraAbilitySystemComponent* GetAbilitySystemComponent() const;
