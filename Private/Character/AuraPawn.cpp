@@ -1,4 +1,4 @@
-#include "Character/AuraCharacter.h"
+#include "Character/AuraPawn.h"
 
 #include "AbilitySystem/AuraAbilitySet.h"
 #include "AbilitySystemComponent.h"
@@ -15,7 +15,7 @@
 #include "Interaction/AuraInteractionComponent.h"
 #include "UI/AuraHUDLayout.h"
 
-AAuraCharacter::AAuraCharacter() {
+AAuraPawn::AAuraPawn() {
   PrimaryActorTick.bCanEverTick = true;
 
   AbilitySystemComponent = CreateDefaultSubobject<UAuraAbilitySystemComponent>(
@@ -28,11 +28,19 @@ AAuraCharacter::AAuraCharacter() {
   InteractionComponent->SetInteractionTraceChannel(InteractionTraceChannel);
 }
 
-UAbilitySystemComponent* AAuraCharacter::GetAbilitySystemComponent() const {
+void AAuraPawn::Tick(float DeltaTime) {
+  Super::Tick(DeltaTime);
+
+  if (AbilitySystemComponent && IsLocallyControlled()) {
+    AbilitySystemComponent->ProcessAbilityInput(DeltaTime, false);
+  }
+}
+
+UAbilitySystemComponent* AAuraPawn::GetAbilitySystemComponent() const {
   return AbilitySystemComponent;
 }
 
-void AAuraCharacter::BeginPlay() {
+void AAuraPawn::BeginPlay() {
   Super::BeginPlay();
 
   if (DefaultAbilitySet) {
@@ -52,7 +60,7 @@ void AAuraCharacter::BeginPlay() {
   }
 }
 
-void AAuraCharacter::SetupPlayerInputComponent(
+void AAuraPawn::SetupPlayerInputComponent(
     UInputComponent* PlayerInputComponent) {
   Super::SetupPlayerInputComponent(PlayerInputComponent);
 
@@ -60,25 +68,25 @@ void AAuraCharacter::SetupPlayerInputComponent(
       CastChecked<UAuraEnhancedInputComponent>(PlayerInputComponent);
 
   if (InputConfig) {
-    AuraInputComponent->BindAbilityActions(
-        InputConfig, this, &AAuraCharacter::InputAbilityPressed,
-        &AAuraCharacter::InputAbilityReleased);
+    AuraInputComponent->BindAbilityActions(InputConfig, this,
+                                           &AAuraPawn::InputAbilityPressed,
+                                           &AAuraPawn::InputAbilityReleased);
   }
 }
 
-void AAuraCharacter::InputAbilityPressed(FGameplayTag InputTag) {
+void AAuraPawn::InputAbilityPressed(FGameplayTag InputTag) {
   if (AbilitySystemComponent) {
     AbilitySystemComponent->AbilityInputTagPressed(InputTag);
   }
 }
 
-void AAuraCharacter::InputAbilityReleased(FGameplayTag InputTag) {
+void AAuraPawn::InputAbilityReleased(FGameplayTag InputTag) {
   if (AbilitySystemComponent) {
     AbilitySystemComponent->AbilityInputTagReleased(InputTag);
   }
 }
 
-void AAuraCharacter::PossessedBy(AController* NewController) {
+void AAuraPawn::PossessedBy(AController* NewController) {
   Super::PossessedBy(NewController);
 
   UE_LOG(LogTemp, Log, TEXT("Inside character possessedby"));
@@ -93,7 +101,7 @@ void AAuraCharacter::PossessedBy(AController* NewController) {
   }
 }
 
-void AAuraCharacter::UnPossessed() {
+void AAuraPawn::UnPossessed() {
   // Remove any HUD we added to the player's UI
   if (HUDLayoutWidget.IsValid()) {
     UE_LOG(LogTemp, Log, TEXT("Cleaning up HUD Layout Widget"));
@@ -102,12 +110,4 @@ void AAuraCharacter::UnPossessed() {
   }
 
   Super::UnPossessed();
-}
-
-void AAuraCharacter::Tick(float DeltaTime) {
-  Super::Tick(DeltaTime);
-
-  if (AbilitySystemComponent && IsLocallyControlled()) {
-    AbilitySystemComponent->ProcessAbilityInput(DeltaTime, false);
-  }
 }

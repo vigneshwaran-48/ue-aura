@@ -40,7 +40,7 @@ void UAuraInteractionComponent::UpdateCurrentTarget() {
   FCollisionShape Sphere = FCollisionShape::MakeSphere(TraceRadius);
 
   bool bHit = GetWorld()->SweepMultiByChannel(Hits, Start, End, FQuat::Identity,
-                                              ECC_GameTraceChannel1, Sphere);
+                                              TraceChannel, Sphere);
 
   UAuraInteractableComponent* FoundInteractable = nullptr;
 

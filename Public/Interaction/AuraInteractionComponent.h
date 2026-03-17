@@ -16,6 +16,10 @@ class AURA_API UAuraInteractionComponent : public UActorComponent {
   AActor* GetInteractableActor() const;
   UAuraInteractableComponent* GetInteractableComponent() const;
 
+  void SetInteractionTraceChannel(ECollisionChannel NewTraceChannel) {
+    TraceChannel = NewTraceChannel;
+  }
+
  protected:
   virtual void BeginPlay() override;
 
@@ -52,4 +56,6 @@ class AURA_API UAuraInteractionComponent : public UActorComponent {
   float ScanRadius = 200.f;
 
   FTimerHandle ScanTimer;
+
+  ECollisionChannel TraceChannel = ECC_Visibility;
 };
