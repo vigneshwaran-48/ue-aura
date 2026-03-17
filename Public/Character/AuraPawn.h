@@ -1,11 +1,11 @@
 #pragma once
 
+#include "AbilitySystem/AuraAbilitySet.h"
 #include "AbilitySystemInterface.h"
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "GameFramework/Pawn.h"
 #include "GameplayTagContainer.h"
-#include "AbilitySystem/AuraAbilitySet.h"
-#include "AuraCharacter.generated.h"
+#include "AuraPawn.generated.h"
 
 class UAuraAbilitySystemComponent;
 class UAuraInputConfig;
@@ -18,28 +18,14 @@ class UCommonActivatableWidget;
 class UAuraHUDLayout;
 
 UCLASS()
-class AURA_API AAuraCharacter : public ACharacter,
-                                public IAbilitySystemInterface {
+class AURA_API AAuraPawn : public APawn, public IAbilitySystemInterface {
   GENERATED_BODY()
 
  public:
-  AAuraCharacter();
-
-  virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+  AAuraPawn();
 
  protected:
   virtual void BeginPlay() override;
-
-  virtual void PossessedBy(AController* NewController) override;
-
-  virtual void UnPossessed() override;
-
-  virtual void SetupPlayerInputComponent(
-      UInputComponent* PlayerInputComponent) override;
-
-  virtual void Tick(float DeltaTime) override;
-
- protected:
 
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Aura|GAS")
   TObjectPtr<UAuraAbilitySystemComponent> AbilitySystemComponent;
@@ -70,12 +56,22 @@ class AURA_API AAuraCharacter : public ACharacter,
   UPROPERTY(EditDefaultsOnly, DisplayName = "Aura|Interaction")
   TEnumAsByte<ECollisionChannel> InteractionTraceChannel;
 
- private:
+ public:
+  virtual void Tick(float DeltaTime) override;
 
+  virtual void PossessedBy(AController* NewController) override;
+
+  virtual void UnPossessed() override;
+
+  virtual void SetupPlayerInputComponent(
+      UInputComponent* PlayerInputComponent) override;
+
+  virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+ private:
   void InputAbilityPressed(FGameplayTag InputTag);
 
   void InputAbilityReleased(FGameplayTag InputTag);
 
   FAuraAbilitySet_GrantedHandles AbilitySetHandles;
-
 };
