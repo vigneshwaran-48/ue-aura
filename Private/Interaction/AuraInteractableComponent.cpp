@@ -1,11 +1,9 @@
 #include "Interaction/AuraInteractableComponent.h"
 
+#include "Blueprint/UserWidget.h"
+
 UAuraInteractableComponent::UAuraInteractableComponent() {
   PrimaryComponentTick.bCanEverTick = false;
-}
-
-void UAuraInteractableComponent::BeginPlay() {
-  Super::BeginPlay();
 }
 
 const TArray<FAuraInteractionOption>&
@@ -15,4 +13,12 @@ UAuraInteractableComponent::GetInteractionOptions() const {
 
 void UAuraInteractableComponent::Interact(AActor* Interactor) {
   OnInteract.Broadcast(GetOwner());
+}
+
+void UAuraInteractableComponent::HandleFocusGained() {
+  OnFocusGained.Broadcast();
+}
+
+void UAuraInteractableComponent::HandleFocusLost() {
+  OnFocusLost.Broadcast();
 }

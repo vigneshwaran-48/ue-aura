@@ -53,10 +53,6 @@ void UAuraInteractionComponent::UpdateCurrentTarget() {
           HitActor->FindComponentByClass<UAuraInteractableComponent>();
 
       if (Interactable) {
-#if WITH_EDITOR
-        DrawDebugSphere(GetWorld(), Hit.Location, TraceRadius, 16,
-                        FColor::Green, false, 0.1f);
-#endif
         FoundInteractable = Interactable;
         break;
       }

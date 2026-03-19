@@ -1,13 +1,13 @@
 #pragma once
 
 #include "AuraInteractionOption.h"
-#include "Components/ActorComponent.h"
+#include "Components/SceneComponent.h"
+#include "Components/WidgetComponent.h"
 #include "CoreMinimal.h"
 #include "AuraInteractableComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAuraOnInteractSignature, AActor*,
                                             Interactor);
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAuraOnEventSignature);
 
 UCLASS(ClassGroup = (Aura), meta = (BlueprintSpawnableComponent))
@@ -36,9 +36,14 @@ class AURA_API UAuraInteractableComponent : public UActorComponent {
   UPROPERTY(BlueprintAssignable, Category = "Interaction")
   FAuraOnEventSignature OnFocusLost;
 
- protected:
-  virtual void BeginPlay() override;
+  void HandleFocusGained();
 
-  UPROPERTY(EditAnywhere, BlueprintReadOnly)
+  void HandleFocusLost();
+
+ protected:
+
+  /** Interaction data */
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
   TArray<FAuraInteractionOption> InteractionOptions;
+
 };
