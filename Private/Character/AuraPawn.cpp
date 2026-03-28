@@ -4,6 +4,7 @@
 #include "AbilitySystemComponent.h"
 #include "AuraAbilitySystemComponent.h"
 #include "AuraGameplayTags.h"
+#include "Character/AuraPawnData.h"
 #include "CommonUIExtensions.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -40,25 +41,7 @@ UAbilitySystemComponent* AAuraPawn::GetAbilitySystemComponent() const {
   return AbilitySystemComponent;
 }
 
-void AAuraPawn::BeginPlay() {
-  Super::BeginPlay();
-
-  if (DefaultAbilitySet) {
-    DefaultAbilitySet->GiveToAbilitySystem(AbilitySystemComponent,
-                                           AbilitySetHandles);
-  }
-
-  if (APlayerController* PC = Cast<APlayerController>(GetController())) {
-    if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer()) {
-      if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-              LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>()) {
-        if (DefaultMappingContext) {
-          Subsystem->AddMappingContext(DefaultMappingContext, 0);
-        }
-      }
-    }
-  }
-}
+void AAuraPawn::BeginPlay() { Super::BeginPlay(); }
 
 void AAuraPawn::SetupPlayerInputComponent(
     UInputComponent* PlayerInputComponent) {
@@ -67,8 +50,8 @@ void AAuraPawn::SetupPlayerInputComponent(
   UAuraEnhancedInputComponent* AuraInputComponent =
       CastChecked<UAuraEnhancedInputComponent>(PlayerInputComponent);
 
-  if (InputConfig) {
-    AuraInputComponent->BindAbilityActions(InputConfig, this,
+  if (PawnData && PawnData->InputConfig) {
+    AuraInputComponent->BindAbilityActions(PawnData->InputConfig, this,
                                            &AAuraPawn::InputAbilityPressed,
                                            &AAuraPawn::InputAbilityReleased);
   }
@@ -88,17 +71,7 @@ void AAuraPawn::InputAbilityReleased(FGameplayTag InputTag) {
 
 void AAuraPawn::PossessedBy(AController* NewController) {
   Super::PossessedBy(NewController);
-
-  UE_LOG(LogTemp, Log, TEXT("Inside character possessedby"));
-
-  const APlayerController* PC = Cast<APlayerController>(NewController);
-  if (ensure(PC)) {
-    // Add HUD Layout widget to the player's Game UI Layer
-    UE_LOG(LogTemp, Log, TEXT("Pushing Game HUD [%s] to UI"),
-           *GetNameSafe(HUDLayoutClass));
-    HUDLayoutWidget = UCommonUIExtensions::PushContentToLayer_ForPlayer(
-        PC->GetLocalPlayer(), TAG_UI_Layer_Game, HUDLayoutClass);
-  }
+  InitializeFromPawnData();
 }
 
 void AAuraPawn::UnPossessed() {
@@ -110,4 +83,47 @@ void AAuraPawn::UnPossessed() {
   }
 
   Super::UnPossessed();
+}
+
+void AAuraPawn::InitializeFromPawnData() {
+  InitializeAbilities();
+  InitializeInput();
+  InitializeUI();
+}
+
+void AAuraPawn::InitializeAbilities() {
+  if (!AbilitySystemComponent || !PawnData) return;
+
+  for (const UAuraAbilitySet* Set : PawnData->AbilitySets) {
+    if (Set) {
+      Set->GiveToAbilitySystem(AbilitySystemComponent, AbilitySetHandles);
+    }
+  }
+}
+
+void AAuraPawn::InitializeInput() {
+  if (!PawnData) return;
+
+  if (APlayerController* PC = Cast<APlayerController>(GetController())) {
+    if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer()) {
+      if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+              LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>()) {
+        if (PawnData->InputMappingContext) {
+          Subsystem->AddMappingContext(PawnData->InputMappingContext, 0);
+        }
+      }
+    }
+  }
+}
+
+void AAuraPawn::InitializeUI() {
+  if (!PawnData) return;
+
+  const APlayerController* PC = Cast<APlayerController>(GetController());
+  if (!PC) return;
+
+  if (PawnData->HUDLayoutClass) {
+    HUDLayoutWidget = UCommonUIExtensions::PushContentToLayer_ForPlayer(
+        PC->GetLocalPlayer(), TAG_UI_Layer_Game, PawnData->HUDLayoutClass);
+  }
 }

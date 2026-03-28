@@ -16,6 +16,7 @@ class UAuraEquipmentManagerComponent;
 class UAuraInteractionComponent;
 class UCommonActivatableWidget;
 class UAuraHUDLayout;
+class UAuraPawnData;
 
 UCLASS()
 class AURA_API AAuraPawn : public APawn, public IAbilitySystemInterface {
@@ -30,31 +31,20 @@ class AURA_API AAuraPawn : public APawn, public IAbilitySystemInterface {
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Aura|GAS")
   TObjectPtr<UAuraAbilitySystemComponent> AbilitySystemComponent;
 
-  UPROPERTY(EditDefaultsOnly, Category = "Aura|Input")
-  TObjectPtr<UInputMappingContext> DefaultMappingContext;
-
-  UPROPERTY(EditDefaultsOnly, Category = "Aura|Input")
-  TObjectPtr<UAuraInputConfig> InputConfig;
-
-  UPROPERTY(EditDefaultsOnly, Category = "Aura|Ability System")
-  UAuraAbilitySet* DefaultAbilitySet;
-
   UPROPERTY(VisibleAnywhere)
   TObjectPtr<UAuraInteractionComponent> InteractionComponent;
 
   UPROPERTY(VisibleAnywhere)
   TObjectPtr<UAuraEquipmentManagerComponent> EquipmentManager;
 
-  /** The HUD Layout widget to use (must be derived from Aura HUD Layout) */
-  UPROPERTY(EditDefaultsOnly, DisplayName = "Aura|HUD Layout")
-  TSubclassOf<UAuraHUDLayout> HUDLayoutClass;
-
-  /** Used to keep track of the widget that was created to be our HUD */
   UPROPERTY(Transient, VisibleInstanceOnly)
   TWeakObjectPtr<UCommonActivatableWidget> HUDLayoutWidget;
 
-  UPROPERTY(EditDefaultsOnly, DisplayName = "Aura|Interaction")
+  UPROPERTY(EditDefaultsOnly, Category = "Aura|Interaction")
   TEnumAsByte<ECollisionChannel> InteractionTraceChannel;
+
+  UPROPERTY(EditDefaultsOnly, Category = "Aura")
+  TObjectPtr<UAuraPawnData> PawnData;
 
  public:
   virtual void Tick(float DeltaTime) override;
@@ -74,4 +64,12 @@ class AURA_API AAuraPawn : public APawn, public IAbilitySystemInterface {
   void InputAbilityReleased(FGameplayTag InputTag);
 
   FAuraAbilitySet_GrantedHandles AbilitySetHandles;
+
+  void InitializeFromPawnData();
+
+  void InitializeAbilities();
+
+  void InitializeInput();
+
+  void InitializeUI();
 };
