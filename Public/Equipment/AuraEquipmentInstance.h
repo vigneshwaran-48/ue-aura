@@ -18,6 +18,10 @@ class AURA_API UAuraEquipmentInstance : public UObject {
   void OnEquipped(UAuraAbilitySystemComponent* ASC);
   void OnUnequipped(UAuraAbilitySystemComponent* ASC);
 
+  TObjectPtr<UAuraEquipmentDefinition> GetEquipmentDefinition() {
+    return EquipmentDefinition;
+  }
+
  protected:
   UPROPERTY()
   TObjectPtr<UAuraEquipmentDefinition> EquipmentDefinition;

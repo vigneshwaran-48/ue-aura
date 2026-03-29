@@ -34,6 +34,18 @@ void UAuraAbilitySystemComponent::AbilityInputTagReleased(
   }
 }
 
+void UAuraAbilitySystemComponent::AddGameplayTag(
+    const FGameplayTag& GameplayTag) {
+  if (!HasMatchingGameplayTag(GameplayTag)) {
+    AddLooseGameplayTag(GameplayTag);
+  }
+}
+
+void UAuraAbilitySystemComponent::RemoveGameplayTag(
+    const FGameplayTag& GameplayTag) {
+  RemoveLooseGameplayTag(GameplayTag);
+}
+
 void UAuraAbilitySystemComponent::AbilitySpecInputPressed(
     FGameplayAbilitySpec& Spec) {
   Super::AbilitySpecInputPressed(Spec);
