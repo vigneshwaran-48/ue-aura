@@ -19,6 +19,12 @@ class AURA_API UAuraAbilitySystemComponent : public UAbilitySystemComponent {
   void AbilityInputTagPressed(const FGameplayTag& InputTag);
   void AbilityInputTagReleased(const FGameplayTag& InputTag);
 
+  UFUNCTION(BlueprintCallable)
+  void AddGameplayTag(const FGameplayTag& GameplayTag);
+
+  UFUNCTION(BlueprintCallable)
+  void RemoveGameplayTag(const FGameplayTag& GameplayTag);
+
  private:
   // Handles to abilities that had their input pressed this frame
   TArray<FGameplayAbilitySpecHandle> InputPressedSpecHandles;

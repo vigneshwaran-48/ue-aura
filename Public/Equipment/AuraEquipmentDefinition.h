@@ -25,6 +25,6 @@ class AURA_API UAuraEquipmentDefinition : public UPrimaryDataAsset {
   UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
   FName AttachSocket;
 
-  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-  FGameplayTag SlotTag;
+  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Categories = "Aura.Slots"))
+  FGameplayTagContainer SlotTags;
 };

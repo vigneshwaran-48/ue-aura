@@ -17,11 +17,11 @@ class AURA_API UAuraEquipmentManagerComponent : public UActorComponent {
   UAuraEquipmentInstance* EquipItem(
       const UAuraEquipmentDefinition* EquipmentDefinition);
 
-  void UnequipItem(FGameplayTag Slot);
+  void UnequipItemBySlot(FGameplayTag Slot);
 
  protected:
   UPROPERTY()
-  TMap<FGameplayTag, TObjectPtr<UAuraEquipmentInstance>> EquippedItems;
+  TArray<TObjectPtr<UAuraEquipmentInstance>> EquippedItems;
 
   UAuraAbilitySystemComponent* GetASC() const;
 };

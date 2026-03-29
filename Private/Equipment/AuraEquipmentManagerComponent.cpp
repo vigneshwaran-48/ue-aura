@@ -22,16 +22,15 @@ UAuraEquipmentInstance* UAuraEquipmentManagerComponent::EquipItem(
   UAuraAbilitySystemComponent* ASC = GetASC();
   if (!ASC) return nullptr;
 
-  const FGameplayTag SlotTag = EquipmentDefinition->SlotTag;
+  const FGameplayTagContainer& NewSlots = EquipmentDefinition->SlotTags;
 
-  UAuraEquipmentInstance* OldInstance = nullptr;
+  for (int32 i = 0; i < EquippedItems.Num(); i++) {
+    UAuraEquipmentInstance* Existing = EquippedItems[i];
 
-  if (EquippedItems.Contains(SlotTag)) {
-    OldInstance = EquippedItems[SlotTag];
-
-    OldInstance->OnUnequipped(ASC);
-
-    EquippedItems.Remove(SlotTag);
+    if (Existing->GetEquipmentDefinition()->SlotTags.HasAny(NewSlots)) {
+      Existing->OnUnequipped(ASC);
+      EquippedItems.RemoveAt(i);
+    }
   }
 
   UAuraEquipmentInstance* NewInstance = NewObject<UAuraEquipmentInstance>(
@@ -42,19 +41,18 @@ UAuraEquipmentInstance* UAuraEquipmentManagerComponent::EquipItem(
 
   NewInstance->OnEquipped(ASC);
 
-  EquippedItems.Add(SlotTag, NewInstance);
+  EquippedItems.Add(NewInstance);
 
-  return OldInstance;
+  return NewInstance;
 }
 
-void UAuraEquipmentManagerComponent::UnequipItem(FGameplayTag SlotTag) {
-  if (!EquippedItems.Contains(SlotTag)) return;
-
+void UAuraEquipmentManagerComponent::UnequipItemBySlot(FGameplayTag SlotTag) {
   UAuraAbilitySystemComponent* ASC = GetASC();
 
-  UAuraEquipmentInstance* Instance = EquippedItems[SlotTag];
-
-  Instance->OnUnequipped(ASC);
-
-  EquippedItems.Remove(SlotTag);
+  for (int32 i = EquippedItems.Num() - 1; i >= 0; --i) {
+    if (EquippedItems[i]->GetEquipmentDefinition()->SlotTags.HasTag(SlotTag)) {
+      EquippedItems[i]->OnUnequipped(ASC);
+      EquippedItems.RemoveAt(i);
+    }
+  }
 }
