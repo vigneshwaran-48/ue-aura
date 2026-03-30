@@ -55,3 +55,9 @@ AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AURA_STATE_STANCE_CROUCH);
 
 
 AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AURA_STATE_ADS);
+
+///////////////////////////////////////////////////////////////
+// Aura Animation Essentials Tags
+///////////////////////////////////////////////////////////////
+
+AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AURA_ANIMATION_ESSENTIALS_HASVELOCITY);
