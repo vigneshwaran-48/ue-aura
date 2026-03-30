@@ -57,3 +57,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_AURA_STATE_STANCE_CROUCH,
 
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_AURA_STATE_ADS, "Aura.State.ADS");
+
+
+///////////////////////////////////////////////////////////////
+// Aura Animation Essentials Tags
+///////////////////////////////////////////////////////////////
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_AURA_ANIMATION_ESSENTIALS_HASVELOCITY, "Aura.Animation.Essentials.HasVelocity");
