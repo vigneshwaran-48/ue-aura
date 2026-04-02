@@ -10,21 +10,26 @@ class AURA_API UAuraOverlayComponent : public UActorComponent {
   GENERATED_BODY()
 
  public:
-
-  UPROPERTY(Transient)
+  UPROPERTY(Transient, BlueprintReadOnly, Category = "Aura|Overlay")
   TObjectPtr<const UAuraOverlayDefinition> BaseOverlay;
 
-  UPROPERTY(Transient)
+  UPROPERTY(Transient, BlueprintReadOnly, Category = "Aura|Overlay")
   TObjectPtr<const UAuraOverlayDefinition> StatusOverlay;
 
-  UPROPERTY(Transient)
+  UPROPERTY(Transient, BlueprintReadOnly, Category = "Aura|Overlay")
   TArray<TObjectPtr<const UAuraOverlayDefinition>> EquipmentOverlays;
 
  public:
+  UFUNCTION(BlueprintCallable, Category = "Aura|Overlay")
   void SetBaseOverlay(const UAuraOverlayDefinition* NewOverlay);
+
+  UFUNCTION(BlueprintCallable, Category = "Aura|Overlay")
   void SetStatusOverlay(const UAuraOverlayDefinition* NewOverlay);
 
+  UFUNCTION(BlueprintCallable, Category = "Aura|Overlay")
   void AddEquipmentOverlay(const UAuraOverlayDefinition* NewOverlay);
+
+  UFUNCTION(BlueprintCallable, Category = "Aura|Overlay")
   void RemoveEquipmentOverlayBySlot(FGameplayTag SlotTag);
 
  private:

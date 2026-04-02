@@ -2,6 +2,7 @@
 
 #include "AbilitySystem/AuraAbilitySet.h"
 #include "AbilitySystemComponent.h"
+#include "Animation/Overlay/AuraOverlayComponent.h"
 #include "AuraAbilitySystemComponent.h"
 #include "AuraGameplayTags.h"
 #include "Character/AuraPawnData.h"
@@ -25,6 +26,8 @@ AAuraPawn::AAuraPawn() {
       "EquipmentManager");
   InteractionComponent =
       CreateDefaultSubobject<UAuraInteractionComponent>("InteractionComponent");
+  OverlayComponent =
+      CreateDefaultSubobject<UAuraOverlayComponent>("OverlayComponent");
 
   InteractionComponent->SetInteractionTraceChannel(InteractionTraceChannel);
 }
