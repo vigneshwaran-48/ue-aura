@@ -13,7 +13,7 @@ class AURA_API UAuraOverlayDefinition : public UPrimaryDataAsset {
   UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
   EAuraOverlayType OverlayType;
 
-  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+  UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
   TArray<FAuraOverlaySlot> Slots;
 
   UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)

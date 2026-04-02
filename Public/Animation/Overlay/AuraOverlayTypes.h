@@ -17,6 +17,14 @@ struct FAuraOverlaySlot {
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly)
   FGameplayTag SlotTag;
+};
+
+USTRUCT(BlueprintType)
+struct FAuraWeightedAnim {
+  GENERATED_BODY()
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly)
+  TObjectPtr<UAnimSequence> Animation;
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly)
   float Weight = 1.f;
@@ -27,16 +35,16 @@ struct FAuraOverlayMovementSet {
   GENERATED_BODY()
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly)
-  TObjectPtr<UAnimSequence> Idle;
+  FAuraWeightedAnim Idle;
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly)
-  TObjectPtr<UAnimSequence> Walk;
+  FAuraWeightedAnim Walk;
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly)
-  TObjectPtr<UAnimSequence> Run;
+  FAuraWeightedAnim Run;
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly)
-  TObjectPtr<UAnimSequence> Sprint;
+  FAuraWeightedAnim Sprint;
 };
 
 USTRUCT(BlueprintType)
