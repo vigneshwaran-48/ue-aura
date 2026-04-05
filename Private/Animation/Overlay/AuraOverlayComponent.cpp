@@ -15,9 +15,9 @@ void UAuraOverlayComponent::AddEquipmentOverlay(
   if (!NewOverlay) return;
 
   // Remove conflicting overlays
-  for (const FAuraOverlaySlot& NewSlot : NewOverlay->Slots) {
+  for (const FGameplayTag& NewSlot : NewOverlay->Slots) {
     EquipmentOverlays.RemoveAll([&](const UAuraOverlayDefinition* Existing) {
-      return DoesOverlayUseSlot(Existing, NewSlot.SlotTag);
+      return DoesOverlayUseSlot(Existing, NewSlot);
     });
   }
 
@@ -34,8 +34,8 @@ bool UAuraOverlayComponent::DoesOverlayUseSlot(
     const UAuraOverlayDefinition* Overlay, const FGameplayTag& SlotTag) const {
   if (!Overlay) return false;
 
-  for (const FAuraOverlaySlot& Slot : Overlay->Slots) {
-    if (Slot.SlotTag == SlotTag) {
+  for (const FGameplayTag& Slot : Overlay->Slots) {
+    if (Slot == SlotTag) {
       return true;
     }
   }

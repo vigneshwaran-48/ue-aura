@@ -38,7 +38,7 @@ class AURA_API AAuraPawn : public APawn, public IAbilitySystemInterface {
   UPROPERTY(VisibleAnywhere)
   TObjectPtr<UAuraEquipmentManagerComponent> EquipmentManager;
 
-  UPROPERTY(VisibleAnywhere)
+  UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
   TObjectPtr<UAuraOverlayComponent> OverlayComponent;
 
   UPROPERTY(Transient, VisibleInstanceOnly)

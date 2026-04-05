@@ -14,8 +14,13 @@ class AURA_API UAuraOverlayDefinition : public UPrimaryDataAsset {
   EAuraOverlayType OverlayType;
 
   UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-  TArray<FAuraOverlaySlot> Slots;
+  FGameplayTagContainer Slots;
 
   UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
   FAuraOverlayStanceSet PoseSet;
+
+#if WITH_EDITOR
+  virtual EDataValidationResult IsDataValid(
+      FDataValidationContext& Context) const override;
+#endif
 };

@@ -43,7 +43,9 @@ void UAuraAbilitySystemComponent::AddGameplayTag(
 
 void UAuraAbilitySystemComponent::RemoveGameplayTag(
     const FGameplayTag& GameplayTag) {
-  RemoveLooseGameplayTag(GameplayTag);
+  if (HasMatchingGameplayTag(GameplayTag)) {
+    RemoveLooseGameplayTag(GameplayTag);
+  }
 }
 
 void UAuraAbilitySystemComponent::AbilitySpecInputPressed(
