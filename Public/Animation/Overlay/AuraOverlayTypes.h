@@ -12,11 +12,17 @@ UENUM(BlueprintType)
 enum class EAuraOverlayVariant : uint8 { Relax, Ready, Aim };
 
 USTRUCT(BlueprintType)
-struct FAuraOverlaySlot {
+struct FAuraOverlaySlotWeight {
   GENERATED_BODY()
 
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "Aura.Slots"))
+  FGameplayTag Slot;
+
   UPROPERTY(EditAnywhere, BlueprintReadOnly)
-  FGameplayTag SlotTag;
+  float Weight = 1.f;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly)
+  float BlendWeight = 1.f;
 };
 
 USTRUCT(BlueprintType)
@@ -26,8 +32,8 @@ struct FAuraWeightedAnim {
   UPROPERTY(EditAnywhere, BlueprintReadOnly)
   TObjectPtr<UAnimSequence> Animation;
 
-  UPROPERTY(EditAnywhere, BlueprintReadOnly)
-  float Weight = 1.f;
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
+  TArray<FAuraOverlaySlotWeight> SlotWeights;
 };
 
 USTRUCT(BlueprintType)
@@ -59,6 +65,9 @@ struct FAuraOverlayVariantSet {
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly)
   FAuraOverlayMovementSet Aim;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly)
+  TObjectPtr<UAnimSequence> AimSweep;
 };
 
 USTRUCT(BlueprintType)
