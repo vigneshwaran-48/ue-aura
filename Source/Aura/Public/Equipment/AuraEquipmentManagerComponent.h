@@ -14,9 +14,11 @@ class AURA_API UAuraEquipmentManagerComponent : public UActorComponent {
   GENERATED_BODY()
 
  public:
+  UFUNCTION(BlueprintCallable, Category = "Equipment")
   UAuraEquipmentInstance* EquipItem(
       const UAuraEquipmentDefinition* EquipmentDefinition);
 
+  UFUNCTION(BlueprintCallable, Category = "Equipment")
   void UnequipItemBySlot(FGameplayTag Slot);
 
  protected:

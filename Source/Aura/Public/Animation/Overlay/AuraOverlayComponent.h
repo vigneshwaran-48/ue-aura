@@ -5,34 +5,45 @@
 #include "CoreMinimal.h"
 #include "AuraOverlayComponent.generated.h"
 
-UCLASS(ClassGroup = (Aura), meta = (BlueprintSpawnableComponent))
+class USkeletalMeshComponent;
+
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class AURA_API UAuraOverlayComponent : public UActorComponent {
   GENERATED_BODY()
 
  public:
-  UPROPERTY(Transient, BlueprintReadOnly, Category = "Aura|Overlay")
-  TObjectPtr<const UAuraOverlayDefinition> BaseOverlay;
+  UAuraOverlayComponent();
 
-  UPROPERTY(Transient, BlueprintReadOnly, Category = "Aura|Overlay")
-  TObjectPtr<const UAuraOverlayDefinition> StatusOverlay;
-
-  UPROPERTY(Transient, BlueprintReadOnly, Category = "Aura|Overlay")
-  TArray<TObjectPtr<const UAuraOverlayDefinition>> EquipmentOverlays;
+ protected:
+  virtual void BeginPlay() override;
 
  public:
-  UFUNCTION(BlueprintCallable, Category = "Aura|Overlay")
-  void SetBaseOverlay(const UAuraOverlayDefinition* NewOverlay);
+  UPROPERTY(EditDefaultsOnly, Category = "Overlay")
+  const UAuraOverlayDefinition* BaseOverlayDefault = nullptr;
 
-  UFUNCTION(BlueprintCallable, Category = "Aura|Overlay")
-  void SetStatusOverlay(const UAuraOverlayDefinition* NewOverlay);
-
-  UFUNCTION(BlueprintCallable, Category = "Aura|Overlay")
-  void AddEquipmentOverlay(const UAuraOverlayDefinition* NewOverlay);
-
-  UFUNCTION(BlueprintCallable, Category = "Aura|Overlay")
-  void RemoveEquipmentOverlayBySlot(FGameplayTag SlotTag);
+  UPROPERTY(EditDefaultsOnly, Category = "Overlay")
+  const UAuraOverlayDefinition* PoseOverlayDefault = nullptr;
 
  private:
-  bool DoesOverlayUseSlot(const UAuraOverlayDefinition* Overlay,
-                          const FGameplayTag& SlotTag) const;
+  UPROPERTY()
+  USkeletalMeshComponent* OwnerMesh = nullptr;
+
+ public:
+  void InitializeOverlay();
+
+  void SetBaseOverlay(const UAuraOverlayDefinition* NewOverlay);
+
+  void SetPoseOverlay(const UAuraOverlayDefinition* NewOverlay);
+
+  void ClearPoseOverlay();
+
+ protected:
+  UPROPERTY()
+  const UAuraOverlayDefinition* BaseOverlay = nullptr;
+
+  UPROPERTY()
+  const UAuraOverlayDefinition* PoseOverlay = nullptr;
+
+ private:
+  void ApplyOverlay(const UAuraOverlayDefinition* Overlay);
 };

@@ -130,3 +130,24 @@ void AAuraPawn::InitializeUI() {
         PC->GetLocalPlayer(), TAG_UI_Layer_Game, PawnData->HUDLayoutClass);
   }
 }
+
+USceneComponent* AAuraPawn::GetEquipmentAttachComponent_Implementation(
+    FName SocketName) const {
+  if (USkeletalMeshComponent* SkelMesh =
+          FindComponentByClass<USkeletalMeshComponent>()) {
+    return SkelMesh;
+  }
+
+  if (USceneComponent* SceneComp = GetRootComponent()) {
+    UE_LOG(LogTemp, Warning,
+           TEXT("Using RootComponent as fallback attach for %s"),
+           *GetNameSafe(this));
+
+    return SceneComp;
+  }
+
+  UE_LOG(LogTemp, Error, TEXT("No valid attach component found on %s"),
+         *GetNameSafe(this));
+
+  return nullptr;
+}
