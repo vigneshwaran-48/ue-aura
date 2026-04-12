@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Equipment/AuraEquipmentManagerComponent.h"
 #include "GameplayTagContainer.h"
 #include "AuraEquipmentDefinition.generated.h"
 
@@ -25,6 +26,12 @@ class AURA_API UAuraEquipmentDefinition : public UPrimaryDataAsset {
   UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
   FName AttachSocket;
 
-  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Categories = "Aura.Slots"))
-  FGameplayTagContainer SlotTags;
+  UPROPERTY(EditDefaultsOnly)
+  EAuraEquipmentType EquipmentType;
+
+  UPROPERTY(
+      EditDefaultsOnly,
+      meta = (EditCondition = "EquipmentType == EAuraEquipmentType::Passive",
+              EditConditionHides))
+  FGameplayTag PassiveSlotTag;
 };

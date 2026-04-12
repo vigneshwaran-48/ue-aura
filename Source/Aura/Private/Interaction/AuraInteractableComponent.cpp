@@ -11,14 +11,14 @@ UAuraInteractableComponent::GetInteractionOptions() const {
   return InteractionOptions;
 }
 
-void UAuraInteractableComponent::Interact(AActor* Interactor) {
-  OnInteract.Broadcast(GetOwner());
+void UAuraInteractableComponent::Interact(AActor* Interactor) const {
+  OnInteract.Broadcast(Interactor);
 }
 
-void UAuraInteractableComponent::HandleFocusGained() {
+void UAuraInteractableComponent::HandleFocusGained() const {
   OnFocusGained.Broadcast();
 }
 
-void UAuraInteractableComponent::HandleFocusLost() {
+void UAuraInteractableComponent::HandleFocusLost() const {
   OnFocusLost.Broadcast();
 }

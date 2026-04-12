@@ -2,6 +2,7 @@
 
 #include "AbilitySystem/AuraAbilitySet.h"
 #include "AbilitySystemInterface.h"
+#include "Equipment/AuraEquipmentInterface.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "GameplayTagContainer.h"
@@ -20,7 +21,7 @@ class UAuraPawnData;
 class UAuraOverlayComponent;
 
 UCLASS()
-class AURA_API AAuraPawn : public APawn, public IAbilitySystemInterface {
+class AURA_API AAuraPawn : public APawn, public IAbilitySystemInterface, public IAuraEquipmentInterface {
   GENERATED_BODY()
 
  public:
@@ -61,6 +62,9 @@ class AURA_API AAuraPawn : public APawn, public IAbilitySystemInterface {
       UInputComponent* PlayerInputComponent) override;
 
   virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+  virtual USceneComponent* GetEquipmentAttachComponent_Implementation(
+      FName SocketName) const override;
 
  private:
   void InputAbilityPressed(FGameplayTag InputTag);

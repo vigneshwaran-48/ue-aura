@@ -1,44 +1,69 @@
 #include "Animation/Overlay/AuraOverlayComponent.h"
 
+#include "Animation/Overlay/AuraOverlayDefinition.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/Actor.h"
+
+UAuraOverlayComponent::UAuraOverlayComponent() {
+  PrimaryComponentTick.bCanEverTick = false;
+}
+
+void UAuraOverlayComponent::BeginPlay() {
+  Super::BeginPlay();
+
+  AActor* Owner = GetOwner();
+  if (Owner) {
+    OwnerMesh = Owner->FindComponentByClass<USkeletalMeshComponent>();
+  }
+
+  InitializeOverlay();
+}
+
+void UAuraOverlayComponent::InitializeOverlay() {
+  BaseOverlay = BaseOverlayDefault;
+  PoseOverlay = nullptr;
+
+  if (BaseOverlay) {
+    ApplyOverlay(BaseOverlay);
+  } else if (PoseOverlayDefault) {
+    ApplyOverlay(PoseOverlayDefault);
+  }
+}
+
 void UAuraOverlayComponent::SetBaseOverlay(
     const UAuraOverlayDefinition* NewOverlay) {
-  BaseOverlay = NewOverlay;
+  BaseOverlay = NewOverlay ? NewOverlay : BaseOverlayDefault;
+
+  // Only apply if no pose overlay is active
+  if (!PoseOverlay) {
+    ApplyOverlay(BaseOverlay);
+  }
 }
 
-void UAuraOverlayComponent::SetStatusOverlay(
+void UAuraOverlayComponent::SetPoseOverlay(
     const UAuraOverlayDefinition* NewOverlay) {
-  StatusOverlay = NewOverlay;
+  PoseOverlay = NewOverlay ? NewOverlay : PoseOverlayDefault;
+
+  ApplyOverlay(PoseOverlay);
 }
 
-void UAuraOverlayComponent::AddEquipmentOverlay(
-    const UAuraOverlayDefinition* NewOverlay) {
-  if (!NewOverlay) return;
+void UAuraOverlayComponent::ClearPoseOverlay() {
+  PoseOverlay = nullptr;
 
-  // Remove conflicting overlays
-  for (const FGameplayTag& NewSlot : NewOverlay->Slots) {
-    EquipmentOverlays.RemoveAll([&](const UAuraOverlayDefinition* Existing) {
-      return DoesOverlayUseSlot(Existing, NewSlot);
-    });
+  if (BaseOverlay) {
+    ApplyOverlay(BaseOverlay);
+  } else if (BaseOverlayDefault) {
+    ApplyOverlay(BaseOverlayDefault);
+  }
+}
+
+void UAuraOverlayComponent::ApplyOverlay(
+    const UAuraOverlayDefinition* Overlay) {
+  if (!Overlay || !OwnerMesh) return;
+
+  if (Overlay->OverlayAnimBP) {
+    OwnerMesh->LinkAnimClassLayers(Overlay->OverlayAnimBP);
   }
 
-  EquipmentOverlays.Add(NewOverlay);
-}
-
-void UAuraOverlayComponent::RemoveEquipmentOverlayBySlot(FGameplayTag SlotTag) {
-  EquipmentOverlays.RemoveAll([&](const UAuraOverlayDefinition* Existing) {
-    return DoesOverlayUseSlot(Existing, SlotTag);
-  });
-}
-
-bool UAuraOverlayComponent::DoesOverlayUseSlot(
-    const UAuraOverlayDefinition* Overlay, const FGameplayTag& SlotTag) const {
-  if (!Overlay) return false;
-
-  for (const FGameplayTag& Slot : Overlay->Slots) {
-    if (Slot == SlotTag) {
-      return true;
-    }
-  }
-
-  return false;
+  UE_LOG(LogTemp, Log, TEXT("Overlay Applied: %s"), *GetNameSafe(Overlay));
 }

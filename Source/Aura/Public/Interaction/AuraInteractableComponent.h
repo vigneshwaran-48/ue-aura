@@ -22,7 +22,7 @@ class AURA_API UAuraInteractableComponent : public UActorComponent {
   UPROPERTY(BlueprintAssignable, Category = "Interaction")
   FAuraOnInteractSignature OnInteract;
 
-  void Interact(AActor* Interactor);
+  void Interact(AActor* Interactor) const;
 
   UPROPERTY(BlueprintAssignable, Category = "Interaction")
   FAuraOnEventSignature OnHighlight;
@@ -36,9 +36,9 @@ class AURA_API UAuraInteractableComponent : public UActorComponent {
   UPROPERTY(BlueprintAssignable, Category = "Interaction")
   FAuraOnEventSignature OnFocusLost;
 
-  void HandleFocusGained();
+  void HandleFocusGained() const;
 
-  void HandleFocusLost();
+  void HandleFocusLost() const;
 
  protected:
 
