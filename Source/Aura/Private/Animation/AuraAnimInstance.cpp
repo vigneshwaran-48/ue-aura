@@ -14,9 +14,10 @@ void UAuraAnimInstance::InitializeWithAbilitySystem(
 
   GameplayTagPropertyMap.Initialize(this, ASC);
 
-  UE_LOG(LogTemp, Log,
-         TEXT("UAuraAnimInstance::InitializeWithAbilitySystem: Initializing ASC "
-              "on AnimInstance %s with ASC from Actor %s"),
+  UE_LOG(
+      LogTemp, Log,
+      TEXT("UAuraAnimInstance::InitializeWithAbilitySystem: Initializing ASC "
+           "on AnimInstance %s with ASC from Actor %s"),
       *GetName(), *ASC->GetOwner()->GetName());
 }
 
