@@ -42,4 +42,6 @@ void UAuraWeaponEquipmentInstance::OnUnequipped_Implementation(
            *GetNameSafe(OwningActor));
     return;
   }
+
+  OverlayComp->ClearPoseOverlay();
 }

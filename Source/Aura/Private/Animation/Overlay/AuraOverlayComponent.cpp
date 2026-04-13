@@ -50,10 +50,8 @@ void UAuraOverlayComponent::SetPoseOverlay(
 void UAuraOverlayComponent::ClearPoseOverlay() {
   PoseOverlay = nullptr;
 
-  if (BaseOverlay) {
-    ApplyOverlay(BaseOverlay);
-  } else if (BaseOverlayDefault) {
-    ApplyOverlay(BaseOverlayDefault);
+  if (PoseOverlayDefault) {
+    ApplyOverlay(PoseOverlayDefault);
   }
 }
 
