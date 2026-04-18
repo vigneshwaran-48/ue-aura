@@ -13,6 +13,7 @@
 #include "Input/AuraEnhancedInputComponent.h"
 #include "Input/AuraInputConfig.h"
 #include "Interaction/AuraInteractionComponent.h"
+#include "Inventory/AuraInventoryComponent.h"
 #include "UI/AuraHUDLayout.h"
 
 AAuraCharacter::AAuraCharacter() {
@@ -26,6 +27,9 @@ AAuraCharacter::AAuraCharacter() {
       CreateDefaultSubobject<UAuraInteractionComponent>("InteractionComponent");
 
   InteractionComponent->SetInteractionTraceChannel(InteractionTraceChannel);
+
+  InventoryComponent =
+      CreateDefaultSubobject<UAuraInventoryComponent>("InventoryComponent");
 }
 
 UAbilitySystemComponent* AAuraCharacter::GetAbilitySystemComponent() const {

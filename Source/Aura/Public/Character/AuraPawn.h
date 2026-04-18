@@ -19,6 +19,7 @@ class UCommonActivatableWidget;
 class UAuraHUDLayout;
 class UAuraPawnData;
 class UAuraOverlayComponent;
+class UAuraInventoryComponent;
 
 UCLASS()
 class AURA_API AAuraPawn : public APawn, public IAbilitySystemInterface, public IAuraEquipmentInterface {
@@ -41,6 +42,9 @@ class AURA_API AAuraPawn : public APawn, public IAbilitySystemInterface, public 
 
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
   TObjectPtr<UAuraOverlayComponent> OverlayComponent;
+
+  UPROPERTY(VisibleAnywhere)
+  TObjectPtr<UAuraInventoryComponent> InventoryComponent;
 
   UPROPERTY(Transient, VisibleInstanceOnly)
   TWeakObjectPtr<UCommonActivatableWidget> HUDLayoutWidget;
