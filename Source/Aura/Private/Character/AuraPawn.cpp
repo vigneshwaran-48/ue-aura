@@ -15,6 +15,7 @@
 #include "Input/AuraEnhancedInputComponent.h"
 #include "Input/AuraInputConfig.h"
 #include "Interaction/AuraInteractionComponent.h"
+#include "Inventory/AuraInventoryComponent.h"
 #include "UI/AuraHUDLayout.h"
 
 AAuraPawn::AAuraPawn() {
@@ -28,6 +29,8 @@ AAuraPawn::AAuraPawn() {
       CreateDefaultSubobject<UAuraInteractionComponent>("InteractionComponent");
   OverlayComponent =
       CreateDefaultSubobject<UAuraOverlayComponent>("OverlayComponent");
+  InventoryComponent =
+      CreateDefaultSubobject<UAuraInventoryComponent>("InventoryComponent");
 
   InteractionComponent->SetInteractionTraceChannel(InteractionTraceChannel);
 }

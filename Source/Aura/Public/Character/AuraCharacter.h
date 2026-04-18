@@ -16,6 +16,7 @@ class UAuraEquipmentManagerComponent;
 class UAuraInteractionComponent;
 class UCommonActivatableWidget;
 class UAuraHUDLayout;
+class UAuraInventoryComponent;
 
 UCLASS()
 class AURA_API AAuraCharacter : public ACharacter,
@@ -58,6 +59,9 @@ class AURA_API AAuraCharacter : public ACharacter,
 
   UPROPERTY(VisibleAnywhere)
   TObjectPtr<UAuraEquipmentManagerComponent> EquipmentManager;
+
+  UPROPERTY(VisibleAnywhere)
+  TObjectPtr<UAuraInventoryComponent> InventoryComponent;
 
   /** The HUD Layout widget to use (must be derived from Aura HUD Layout) */
   UPROPERTY(EditDefaultsOnly, DisplayName = "Aura|HUD Layout")
