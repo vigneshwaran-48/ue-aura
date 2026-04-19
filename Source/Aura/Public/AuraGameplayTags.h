@@ -7,16 +7,22 @@ AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(
     TAG_Aura_Message_Interaction_TargetChanged);
 
 ///////////////////////////////////////////////////////////////
-// UI Tags
+// UI Layer Tags
 ///////////////////////////////////////////////////////////////
-
-AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_Action_MainMenu);
 
 AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_Layer_Game);
 
 AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_Layer_GameMenu);
 
 AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_Layer_Menu);
+
+///////////////////////////////////////////////////////////////
+// UI Tags
+///////////////////////////////////////////////////////////////
+
+AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_Action_MainMenu);
+
+AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_Inventory);
 
 ///////////////////////////////////////////////////////////////
 // Slot Tags

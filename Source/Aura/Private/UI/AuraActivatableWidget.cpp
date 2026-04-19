@@ -2,15 +2,6 @@
 
 UAuraActivatableWidget::UAuraActivatableWidget(
     const FObjectInitializer& ObjectInitializer) {
-  bAutoActivate = true;
-
-  bSetVisibilityOnActivated = true;
-  bSetVisibilityOnDeactivated = true;
-  ActivatedVisibility = ESlateVisibility::SelfHitTestInvisible;
-  DeactivatedVisibility = ESlateVisibility::Collapsed;
-
-  bSupportsActivationFocus = false;  // By default, DO NOT change input settings
-                                     // on each activation/deactivation
 }
 
 TOptional<FUIInputConfig> UAuraActivatableWidget::GetDesiredInputConfig()
@@ -21,11 +12,11 @@ TOptional<FUIInputConfig> UAuraActivatableWidget::GetDesiredInputConfig()
     case EAuraWidgetInputMode::Game:
       ConfigOverride = FUIInputConfig(
           ECommonInputMode::Game,
-          EMouseCaptureMode::CapturePermanently_IncludingInitialMouseDown);
+          GameMouseCaptureMode);
       break;
     case EAuraWidgetInputMode::GameAndMenu:
       ConfigOverride = FUIInputConfig(
-          ECommonInputMode::All, EMouseCaptureMode::CaptureDuringMouseDown);
+          ECommonInputMode::All, GameMouseCaptureMode);
       break;
     case EAuraWidgetInputMode::Menu:
       ConfigOverride =
@@ -39,48 +30,6 @@ TOptional<FUIInputConfig> UAuraActivatableWidget::GetDesiredInputConfig()
   }
 
   return ConfigOverride;
-}
-
-void UAuraActivatableWidget::NativePreConstruct() {
-  Super::NativePreConstruct();
-
-  if (not IsDesignTime()) {
-    // If activatable widgets are supposed to be a specific visibility when not
-    // active, set that Visibility now
-    if (not bAutoActivate && not IsActivated() &&
-        GetVisibility() != DeactivatedVisibility) {
-      SetVisibility(DeactivatedVisibility);
-    }
-  }
-}
-
-void UAuraActivatableWidget::NativeConstruct() {
-  UE_LOG(LogTemp, Log,
-         TEXT("%hs: %s: Widget constructing (DesignTime?=%hi)"), __FUNCTION__,
-         *GetClass()->GetName(), IsDesignTime());
-  Super::NativeConstruct();
-}
-
-void UAuraActivatableWidget::NativeDestruct() {
-  UE_LOG(LogTemp, Log,
-         TEXT("%hs: %s: Widget destructing (DesignTime?=%hi)"), __FUNCTION__,
-         *GetClass()->GetName(), IsDesignTime());
-
-  Super::NativeDestruct();
-}
-
-void UAuraActivatableWidget::NativeOnActivated() {
-  UE_LOG(LogTemp, Log, TEXT("%hs: %s: Widget Activating"), __FUNCTION__,
-         *GetClass()->GetName());
-
-  Super::NativeOnActivated();
-}
-
-void UAuraActivatableWidget::NativeOnDeactivated() {
-  UE_LOG(LogTemp, Log, TEXT("%hs: %s: Widget Deactivating"), __FUNCTION__,
-         *GetClass()->GetName());
-
-  Super::NativeOnDeactivated();
 }
 
 UGameViewportClient* UAuraActivatableWidget::GetViewportClient() const {

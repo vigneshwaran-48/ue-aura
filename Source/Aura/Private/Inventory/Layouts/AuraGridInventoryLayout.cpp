@@ -73,3 +73,31 @@ bool UAuraGridInventoryLayout::GetItemPosition(const FAuraItemHandle& Handle,
   }
   return false;
 }
+
+void UAuraGridInventoryLayout::GetAllItems(
+    TArray<FAuraItemHandle>& OutHandles) const {
+  OutHandles.Reset();
+
+  for (const auto& Pair : ItemPositions) {
+    OutHandles.Add(Pair.Key);
+  }
+}
+
+bool UAuraGridInventoryLayout::TryAddItemAt(const FAuraItemHandle& Handle,
+                                            FIntPoint Position) {
+  FIntPoint Size = GetItemSize(Handle);
+
+  if (!CanPlaceItemAt(Position, Size)) {
+    return false;
+  }
+
+  ItemPositions.Add(Handle, Position);
+
+  for (int32 Y = 0; Y < Size.Y; ++Y) {
+    for (int32 X = 0; X < Size.X; ++X) {
+      OccupiedCells.Add(Position + FIntPoint(X, Y));
+    }
+  }
+
+  return true;
+}
