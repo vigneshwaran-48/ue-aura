@@ -20,16 +20,8 @@ class AURA_API UAuraActivatableWidget : public UCommonActivatableWidget {
   UAuraActivatableWidget(
       const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-  //~Begin UUserWidget interface
-  virtual void NativePreConstruct() override;
-  virtual void NativeConstruct() override;
-  virtual void NativeDestruct() override;
-  //~End UUserWidget interface
-
   //~Begin UCommonActivatableWidget interface
   virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
-  virtual void NativeOnActivated() override;
-  virtual void NativeOnDeactivated() override;
   //~End UCommonActivatableWidget interface
 
   /** @return the ViewportClient of this widget's owning player */
@@ -44,4 +36,8 @@ class AURA_API UAuraActivatableWidget : public UCommonActivatableWidget {
    */
   UPROPERTY(EditDefaultsOnly, Category = Input)
   EAuraWidgetInputMode InputMode = EAuraWidgetInputMode::Default;
+
+  UPROPERTY(EditDefaultsOnly, Category = Input)
+  EMouseCaptureMode GameMouseCaptureMode =
+      EMouseCaptureMode::CapturePermanently;
 };

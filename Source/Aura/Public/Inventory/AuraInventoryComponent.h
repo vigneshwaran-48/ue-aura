@@ -25,6 +25,7 @@ class AURA_API UAuraInventoryComponent : public UActorComponent {
   UFUNCTION(BlueprintCallable, Category = "Inventory")
   bool GetItem(const FAuraItemHandle& Handle, FAuraItemInstance& OutItem) const;
 
+  UFUNCTION(BlueprintCallable, Category = "Inventory")
   UAuraInventoryLayout* GetLayout() const { return Layout; }
 
  private:

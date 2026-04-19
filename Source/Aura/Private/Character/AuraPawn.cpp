@@ -17,6 +17,7 @@
 #include "Interaction/AuraInteractionComponent.h"
 #include "Inventory/AuraInventoryComponent.h"
 #include "UI/AuraHUDLayout.h"
+#include "UI/AuraUIManagerComponent.h"
 
 AAuraPawn::AAuraPawn() {
   PrimaryActorTick.bCanEverTick = true;
@@ -31,6 +32,8 @@ AAuraPawn::AAuraPawn() {
       CreateDefaultSubobject<UAuraOverlayComponent>("OverlayComponent");
   InventoryComponent =
       CreateDefaultSubobject<UAuraInventoryComponent>("InventoryComponent");
+  UIManagerComponent =
+      CreateDefaultSubobject<UAuraUIManagerComponent>("UIManagerComponent");
 
   InteractionComponent->SetInteractionTraceChannel(InteractionTraceChannel);
 }
