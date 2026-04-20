@@ -44,6 +44,10 @@ void UAuraInventoryItemWidget::NativeOnDragDetected(
   UAuraInventoryDragDropOperation* DragOp =
       NewObject<UAuraInventoryDragDropOperation>();
 
+  FVector2D LocalMousePos =
+      InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
+
+  DragOp->DragOffset = LocalMousePos;
   DragOp->ItemHandle = ItemHandle;
   DragOp->ItemSize = ItemSize;
   DragOp->SourceWidget = this;
@@ -62,7 +66,7 @@ void UAuraInventoryItemWidget::NativeOnDragDetected(
         DragOp->OriginalPosition = Pos;
       }
 
-      // Layout->RemoveItem(ItemHandle);
+      Layout->RemoveItem(ItemHandle);
     }
   }
 

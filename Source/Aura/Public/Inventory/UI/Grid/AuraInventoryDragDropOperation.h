@@ -21,4 +21,7 @@ class AURA_API UAuraInventoryDragDropOperation : public UDragDropOperation {
 
   UPROPERTY()
   FIntPoint OriginalPosition;
+
+  UPROPERTY()
+  FVector2D DragOffset;
 };
