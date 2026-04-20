@@ -1,5 +1,6 @@
 #include "Inventory/UI/Grid/AuraInventoryGridWidget.h"
 
+#include "Blueprint/UserWidget.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/SizeBox.h"
@@ -10,6 +11,7 @@
 #include "Inventory/Fragments/AuraItemFragment_Size.h"
 #include "Inventory/Layouts/AuraGridInventoryLayout.h"
 #include "Inventory/UI/Grid/AuraInventoryDragDropOperation.h"
+#include "Inventory/UI/Grid/AuraInventoryGhostWidget.h"
 #include "Inventory/UI/Grid/AuraInventoryItemWidget.h"
 #include "Inventory/UI/Grid/AuraInventorySlotWidget.h"
 
@@ -90,7 +92,12 @@ void UAuraInventoryGridWidget::PopulateItems() {
     return;
   }
 
-  ItemCanvas->ClearChildren();
+  TArray<UWidget*> Children = ItemCanvas->GetAllChildren();
+  for (UWidget* Child : Children) {
+    if (Child != Cast<UWidget>(GhostWidget)) {
+      Child->RemoveFromParent();
+    }
+  }
 
   UAuraInventoryComponent* Inventory = GetInventoryComponent();
   if (!Inventory) {
@@ -154,38 +161,96 @@ bool UAuraInventoryGridWidget::NativeOnDrop(
     UDragDropOperation* InOperation) {
   UAuraInventoryDragDropOperation* DragOp =
       Cast<UAuraInventoryDragDropOperation>(InOperation);
-
-  if (!DragOp) {
-    return false;
-  }
+  if (!DragOp) return false;
 
   UAuraInventoryComponent* Inventory = GetInventoryComponent();
-  if (!Inventory) {
-    return false;
-  }
-
   UAuraGridInventoryLayout* Layout =
-      Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
+      Inventory ? Cast<UAuraGridInventoryLayout>(Inventory->GetLayout())
+                : nullptr;
 
-  if (!Layout) {
-    return false;
+  if (Layout && GhostWidget &&
+      GhostWidget->GetVisibility() != ESlateVisibility::Collapsed) {
+    UCanvasPanelSlot* GhostSlot = Cast<UCanvasPanelSlot>(GhostWidget->Slot);
+    if (GhostSlot) {
+      FVector2D GhostPos = GhostSlot->GetPosition();
+      const float CellSize = Layout->GetCellSize();
+
+      FIntPoint DropCell(FMath::RoundToInt(GhostPos.X / CellSize),
+                         FMath::RoundToInt(GhostPos.Y / CellSize));
+
+      bool bPlaced = Layout->TryAddItemAt(DragOp->ItemHandle, DropCell);
+
+      if (!bPlaced) {
+        Layout->TryAddItemAt(DragOp->ItemHandle, DragOp->OriginalPosition);
+      }
+    }
   }
 
-  const float CellSize = Layout->GetCellSize();
-
-  FVector2D LocalPos =
-      InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
-
-  FIntPoint DropCell(FMath::FloorToInt(LocalPos.X / CellSize),
-                     FMath::FloorToInt(LocalPos.Y / CellSize));
-
-  bool bPlaced = Layout->TryAddItemAt(DragOp->ItemHandle, DropCell);
-
-  if (!bPlaced) {
-    Layout->TryAddItemAt(DragOp->ItemHandle, DragOp->OriginalPosition);
+  if (GhostWidget) {
+    GhostWidget->SetVisibility(ESlateVisibility::Collapsed);
   }
 
   PopulateItems();
-
   return true;
+}
+
+bool UAuraInventoryGridWidget::NativeOnDragOver(
+    const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
+    UDragDropOperation* InOperation) {
+  Super::NativeOnDragOver(InGeometry, InDragDropEvent, InOperation);
+
+  if (UAuraInventoryDragDropOperation* DragOp =
+          Cast<UAuraInventoryDragDropOperation>(InOperation)) {
+    UpdateGhostPreview(InGeometry, InDragDropEvent, DragOp);
+    return true;
+  }
+  return false;
+}
+
+void UAuraInventoryGridWidget::NativeOnDragLeave(
+    const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) {
+  Super::NativeOnDragLeave(InDragDropEvent, InOperation);
+
+  if (GhostWidget) {
+    GhostWidget->SetVisibility(ESlateVisibility::Collapsed);
+  }
+}
+
+void UAuraInventoryGridWidget::UpdateGhostPreview(
+    const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
+    UAuraInventoryDragDropOperation* DragOp) {
+  UAuraInventoryComponent* Inventory = GetInventoryComponent();
+  if (!Inventory || !ItemCanvas || !GhostWidgetClass) return;
+
+  UAuraGridInventoryLayout* Layout =
+      Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
+  if (!Layout) return;
+
+  if (!GhostWidget) {
+    GhostWidget = CreateWidget<UAuraInventoryGhostWidget>(this, GhostWidgetClass);
+    UCanvasPanelSlot* GhostSlot = ItemCanvas->AddChildToCanvas(GhostWidget);
+    GhostSlot->SetZOrder(-1);  // Keep it behind the actual items
+  }
+
+  const float CellSize = Layout->GetCellSize();
+  FVector2D LocalPos =
+      InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+
+  FVector2D ItemTopLeft = LocalPos - DragOp->DragOffset;
+  FIntPoint GhostCell(FMath::RoundToInt(ItemTopLeft.X / CellSize),
+                      FMath::RoundToInt(ItemTopLeft.Y / CellSize));
+
+  GhostWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+  UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(GhostWidget->Slot);
+  if (CanvasSlot) {
+    CanvasSlot->SetPosition(
+        FVector2D(GhostCell.X * CellSize, GhostCell.Y * CellSize));
+    CanvasSlot->SetSize(FVector2D(DragOp->ItemSize.X * CellSize,
+                                  DragOp->ItemSize.Y * CellSize));
+  }
+
+  bool bCanPlace = Layout->CanPlaceItemAt(GhostCell, DragOp->ItemSize);
+  EGhostWidgetState TargetState =
+      bCanPlace ? EGhostWidgetState::Valid : EGhostWidgetState::Invalid;
+  GhostWidget->SetGhostState(TargetState);
 }

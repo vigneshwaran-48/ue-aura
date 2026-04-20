@@ -11,6 +11,8 @@ class UCanvasPanel;
 class UAuraInventorySlotWidget;
 class UAuraInventoryComponent;
 class UAuraInventoryItemWidget;
+class UAuraInventoryDragDropOperation;
+class UAuraInventoryGhostWidget;
 
 UCLASS()
 class AURA_API UAuraInventoryGridWidget : public UUserWidget {
@@ -35,12 +37,31 @@ class AURA_API UAuraInventoryGridWidget : public UUserWidget {
   UPROPERTY(EditDefaultsOnly, Category = "Grid")
   TSubclassOf<UAuraInventoryItemWidget> ItemWidgetClass;
 
+  UPROPERTY(EditAnywhere, Category = "Grid")
+  TSubclassOf<UAuraInventoryGhostWidget> GhostWidgetClass;
+
   virtual bool NativeOnDrop(const FGeometry& InGeometry,
                             const FDragDropEvent& InDragDropEvent,
                             UDragDropOperation* InOperation) override;
 
+  virtual bool NativeOnDragOver(const FGeometry& InGeometry,
+                                const FDragDropEvent& InDragDropEvent,
+                                UDragDropOperation* InOperation) override;
+
+  virtual void NativeOnDragLeave(const FDragDropEvent& InDragDropEvent,
+                                 UDragDropOperation* InOperation) override;
+
  private:
+  UPROPERTY()
+  UAuraInventoryGhostWidget* GhostWidget;
+
   void BuildGrid();
+
   void PopulateItems();
+
   UAuraInventoryComponent* GetInventoryComponent() const;
+
+  void UpdateGhostPreview(const FGeometry& InGeometry,
+                          const FDragDropEvent& InDragDropEvent,
+                          class UAuraInventoryDragDropOperation* DragOp);
 };
