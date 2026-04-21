@@ -75,10 +75,47 @@ void UAuraInventoryItemWidget::NativeOnDragDetected(
 
   if (DragVisual) {
     DragVisual->InitFromItem(*CachedItem, ItemHandle, CellSize);
-
     DragOp->DefaultDragVisual = DragVisual;
   }
-  OutOperation = DragOp;
 
-  RemoveFromParent();
+  SetVisibility(ESlateVisibility::Hidden);
+
+  OutOperation = DragOp;
+}
+
+void UAuraInventoryItemWidget::NativeOnDragCancelled(
+    const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) {
+  UE_LOG(LogTemp, Warning, TEXT("[DragCancelled] Called"));
+
+  UAuraInventoryDragDropOperation* DragOp =
+      Cast<UAuraInventoryDragDropOperation>(InOperation);
+
+  if (!DragOp || !OwningGrid) {
+    return;
+  }
+
+  APawn* Pawn = GetOwningPlayerPawn();
+  if (!Pawn) {
+    return;
+  }
+
+  UAuraInventoryComponent* Inventory =
+      Pawn->FindComponentByClass<UAuraInventoryComponent>();
+
+  if (!Inventory) {
+    return;
+  }
+
+  UAuraGridInventoryLayout* Layout =
+      Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
+
+  if (!Layout) {
+    return;
+  }
+
+  Layout->TryAddItemAt(DragOp->ItemHandle, DragOp->OriginalPosition);
+
+  SetVisibility(ESlateVisibility::Visible);
+
+  OwningGrid->PopulateItems();
 }

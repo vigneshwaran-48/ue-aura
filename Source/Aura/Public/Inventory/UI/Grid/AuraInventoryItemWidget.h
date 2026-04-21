@@ -7,6 +7,8 @@
 #include "Inventory/AuraItemInstance.h"
 #include "AuraInventoryItemWidget.generated.h"
 
+class UAuraInventoryGridWidget;
+
 UCLASS()
 class AURA_API UAuraInventoryItemWidget : public UUserWidget {
   GENERATED_BODY()
@@ -15,6 +17,9 @@ class AURA_API UAuraInventoryItemWidget : public UUserWidget {
   void InitFromItem(const FAuraItemInstance& Item, FAuraItemHandle InHandle,
                     float InCellSize);
 
+  UPROPERTY()
+  TObjectPtr<UAuraInventoryGridWidget> OwningGrid;
+
  protected:
   virtual FReply NativeOnMouseButtonDown(
       const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
@@ -22,6 +27,10 @@ class AURA_API UAuraInventoryItemWidget : public UUserWidget {
   virtual void NativeOnDragDetected(const FGeometry& InGeometry,
                                     const FPointerEvent& InMouseEvent,
                                     UDragDropOperation*& OutOperation) override;
+  
+  virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent,
+                                     UDragDropOperation* InOperation) override;
+  
 
   UPROPERTY(meta = (BindWidget))
   TObjectPtr<USizeBox> RootSizeBox;

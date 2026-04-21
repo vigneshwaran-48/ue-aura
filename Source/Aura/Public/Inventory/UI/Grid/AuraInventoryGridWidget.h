@@ -21,6 +21,8 @@ class AURA_API UAuraInventoryGridWidget : public UUserWidget {
  public:
   virtual void NativeConstruct() override;
 
+  void PopulateItems();
+
  protected:
   UPROPERTY(meta = (BindWidget))
   TObjectPtr<UUniformGridPanel> GridPanel;
@@ -56,8 +58,6 @@ class AURA_API UAuraInventoryGridWidget : public UUserWidget {
   UAuraInventoryGhostWidget* GhostWidget;
 
   void BuildGrid();
-
-  void PopulateItems();
 
   UAuraInventoryComponent* GetInventoryComponent() const;
 
