@@ -31,10 +31,13 @@ class AURA_API UAuraOverlayComponent : public UActorComponent {
  public:
   void InitializeOverlay();
 
+  UFUNCTION(BlueprintCallable)
   void SetBaseOverlay(const UAuraOverlayDefinition* NewOverlay);
 
+  UFUNCTION(BlueprintCallable)
   void SetPoseOverlay(const UAuraOverlayDefinition* NewOverlay);
 
+  UFUNCTION(BlueprintCallable)
   void ClearPoseOverlay();
 
  protected:

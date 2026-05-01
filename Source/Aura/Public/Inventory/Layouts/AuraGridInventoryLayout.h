@@ -47,4 +47,6 @@ class AURA_API UAuraGridInventoryLayout : public UAuraInventoryLayout {
   TSet<FIntPoint> OccupiedCells;
 
   FIntPoint GetItemSize(const FAuraItemHandle& Handle) const;
+
+  bool IsSpatialItem(const FAuraItemHandle& Handle) const;
 };

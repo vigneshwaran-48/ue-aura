@@ -1,7 +1,9 @@
 #include "Inventory/Layouts/AuraGridInventoryLayout.h"
 
+#include "AuraGameplayTags.h"
 #include "Inventory/AuraInventoryComponent.h"
 #include "Inventory/AuraItemInstance.h"
+#include "Inventory/Fragments/AuraItemFragment_LayoutBehavior.h"
 #include "Inventory/Fragments/AuraItemFragment_Size.h"
 
 FIntPoint UAuraGridInventoryLayout::GetItemSize(
@@ -15,6 +17,10 @@ FIntPoint UAuraGridInventoryLayout::GetItemSize(
 }
 
 bool UAuraGridInventoryLayout::TryAddItem(const FAuraItemHandle& Handle) {
+  if (!IsSpatialItem(Handle)) {
+    return true;
+  }
+
   const FIntPoint Size = GetItemSize(Handle);
 
   for (int y = 0; y < Rows; y++) {
@@ -49,14 +55,20 @@ bool UAuraGridInventoryLayout::CanPlaceItemAt(FIntPoint Position,
 }
 
 void UAuraGridInventoryLayout::RemoveItem(const FAuraItemHandle& Handle) {
+  if (!IsSpatialItem(Handle)) {
+    return;
+  }
+
   if (!ItemPositions.Contains(Handle)) return;
 
   FIntPoint Pos = ItemPositions[Handle];
   FIntPoint Size = GetItemSize(Handle);
 
-  for (int y = 0; y < Size.Y; y++)
-    for (int x = 0; x < Size.X; x++)
+  for (int y = 0; y < Size.Y; y++) {
+    for (int x = 0; x < Size.X; x++) {
       OccupiedCells.Remove(Pos + FIntPoint(x, y));
+    }
+  }
 
   ItemPositions.Remove(Handle);
 }
@@ -85,6 +97,10 @@ void UAuraGridInventoryLayout::GetAllItems(
 
 bool UAuraGridInventoryLayout::TryAddItemAt(const FAuraItemHandle& Handle,
                                             FIntPoint Position) {
+  if (!IsSpatialItem(Handle)) {
+    return true;
+  }
+
   FIntPoint Size = GetItemSize(Handle);
 
   if (!CanPlaceItemAt(Position, Size)) {
@@ -100,4 +116,15 @@ bool UAuraGridInventoryLayout::TryAddItemAt(const FAuraItemHandle& Handle,
   }
 
   return true;
+}
+
+bool UAuraGridInventoryLayout::IsSpatialItem(
+    const FAuraItemHandle& Handle) const {
+  const FAuraItemInstance* Item = Inventory->FindItem(Handle);
+  if (!Item) return true;  // fail-safe: treat as spatial
+
+  const auto* Behavior = Item->FindFragment<UAuraItemFragment_LayoutBehavior>();
+  if (!Behavior) return true;
+
+  return Behavior->LayoutBehaviorTag != TAG_AURA_INVENTORY_LAYOUT_NONSPATIAL;
 }
