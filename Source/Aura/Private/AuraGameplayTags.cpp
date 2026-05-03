@@ -61,12 +61,21 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_AURA_STATE_STANCE_STAND, "Aura.State.Stance.Stand");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AURA_STATE_STANCE_CROUCH,
                        "Aura.State.Stance.Crouch");
 
-
 UE_DEFINE_GAMEPLAY_TAG(TAG_AURA_STATE_ADS, "Aura.State.ADS");
-
 
 ///////////////////////////////////////////////////////////////
 // Aura Animation Essentials Tags
 ///////////////////////////////////////////////////////////////
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_AURA_ANIMATION_ESSENTIALS_HASVELOCITY, "Aura.Animation.Essentials.HasVelocity");
+UE_DEFINE_GAMEPLAY_TAG(TAG_AURA_ANIMATION_ESSENTIALS_HASVELOCITY,
+                       "Aura.Animation.Essentials.HasVelocity");
+
+///////////////////////////////////////////////////////////////
+// Aura Inventory Layout Tags
+///////////////////////////////////////////////////////////////
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_AURA_INVENTORY_LAYOUT_SPATIAL,
+                       "Aura.Inventory.Layout.Spatial");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_AURA_INVENTORY_LAYOUT_NONSPATIAL,
+                       "Aura.Inventory.Layout.NonSpatial");

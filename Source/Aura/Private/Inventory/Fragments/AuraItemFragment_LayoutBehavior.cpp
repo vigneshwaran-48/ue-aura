@@ -1,5 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Interaction/AuraInteractionContext.h"
+#include "Inventory/Fragments/AuraItemFragment_LayoutBehavior.h"
 

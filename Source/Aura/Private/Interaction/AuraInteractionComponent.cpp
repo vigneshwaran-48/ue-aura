@@ -10,7 +10,6 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
-#include "Interaction/Abilities/AuraGameplayAbility_Interactable.h"
 #include "Interaction/AuraInteractableComponent.h"
 #include "Interaction/AuraInteractionMessage.h"
 #include "Kismet/KismetSystemLibrary.h"

@@ -59,11 +59,19 @@ AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AURA_STATE_STANCE_STAND);
 
 AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AURA_STATE_STANCE_CROUCH);
 
-
 AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AURA_STATE_ADS);
 
 ///////////////////////////////////////////////////////////////
 // Aura Animation Essentials Tags
 ///////////////////////////////////////////////////////////////
 
-AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AURA_ANIMATION_ESSENTIALS_HASVELOCITY);
+AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(
+    TAG_AURA_ANIMATION_ESSENTIALS_HASVELOCITY);
+
+///////////////////////////////////////////////////////////////
+// Aura Inventory Layout Tags
+///////////////////////////////////////////////////////////////
+
+AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AURA_INVENTORY_LAYOUT_NONSPATIAL);
+
+AURA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AURA_INVENTORY_LAYOUT_SPATIAL);

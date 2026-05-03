@@ -140,6 +140,7 @@ void UAuraInventoryGridWidget::PopulateItems() {
     }
 
     ItemWidget->InitFromItem(*Item, Handle, Layout->GetCellSize());
+    ItemWidget->OwningGrid = this;
 
     UCanvasPanelSlot* CanvasSlot = ItemCanvas->AddChildToCanvas(ItemWidget);
 
@@ -182,6 +183,14 @@ bool UAuraInventoryGridWidget::NativeOnDrop(
 
       if (!bPlaced) {
         Layout->TryAddItemAt(DragOp->ItemHandle, DragOp->OriginalPosition);
+
+        if (DragOp->SourceWidget) {
+          DragOp->SourceWidget->SetVisibility(ESlateVisibility::Visible);
+        }
+      } else {
+        if (DragOp->SourceWidget) {
+          DragOp->SourceWidget->RemoveFromParent();
+        }
       }
     }
   }
@@ -227,7 +236,8 @@ void UAuraInventoryGridWidget::UpdateGhostPreview(
   if (!Layout) return;
 
   if (!GhostWidget) {
-    GhostWidget = CreateWidget<UAuraInventoryGhostWidget>(this, GhostWidgetClass);
+    GhostWidget =
+        CreateWidget<UAuraInventoryGhostWidget>(this, GhostWidgetClass);
     UCanvasPanelSlot* GhostSlot = ItemCanvas->AddChildToCanvas(GhostWidget);
     GhostSlot->SetZOrder(-1);  // Keep it behind the actual items
   }
