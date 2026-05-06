@@ -13,22 +13,45 @@ UCLASS(ClassGroup = (Aura), meta = (BlueprintSpawnableComponent))
 class AURA_API UAuraInventoryComponent : public UActorComponent {
   GENERATED_BODY()
 
- public:
+public:
   virtual void BeginPlay() override;
 
   UFUNCTION(BlueprintCallable)
-  FAuraItemHandle AddItem(const UAuraItemDefinition* ItemDef);
+  FAuraItemHandle AddItem(const UAuraItemDefinition *ItemDef);
 
-  const FAuraItemInstance* FindItem(const FAuraItemHandle& Handle) const;
-  FAuraItemInstance* FindItem(const FAuraItemHandle& Handle);
-
-  UFUNCTION(BlueprintCallable, Category = "Inventory")
-  bool GetItem(const FAuraItemHandle& Handle, FAuraItemInstance& OutItem) const;
+  const FAuraItemInstance *FindItem(const FAuraItemHandle &Handle) const;
+  FAuraItemInstance *FindItem(const FAuraItemHandle &Handle);
 
   UFUNCTION(BlueprintCallable, Category = "Inventory")
-  UAuraInventoryLayout* GetLayout() const { return Layout; }
+  bool GetItem(const FAuraItemHandle &Handle, FAuraItemInstance &OutItem) const;
 
- private:
+  UFUNCTION(BlueprintCallable, Category = "Inventory")
+  UAuraInventoryLayout *GetLayout() const { return Layout; }
+
+  UFUNCTION(BlueprintCallable, Category = "Inventory")
+  bool HasItemWithTag(FGameplayTag ItemTag) const;
+
+  UFUNCTION(BlueprintCallable, Category = "Inventory")
+  bool HasItemDefinition(const UAuraItemDefinition *ItemDef) const;
+
+  UFUNCTION(BlueprintCallable, Category = "Inventory")
+  FAuraItemHandle FindFirstItemByTag(FGameplayTag ItemTag) const;
+
+  UFUNCTION(BlueprintCallable, Category = "Inventory")
+  FAuraItemHandle
+  FindFirstItemByDefinition(const UAuraItemDefinition *ItemDef) const;
+
+  UFUNCTION(BlueprintCallable, Category = "Inventory")
+  TArray<FAuraItemHandle> FindItemsByTag(FGameplayTag ItemTag) const;
+
+  UFUNCTION(BlueprintCallable, Category = "Inventory")
+  TArray<FAuraItemHandle>
+  FindItemsByDefinition(const UAuraItemDefinition *ItemDef) const;
+
+  UFUNCTION(BlueprintCallable, Category = "Inventory")
+  TArray<FAuraItemHandle> GetAllItemHandles() const;
+
+private:
   UPROPERTY()
   TMap<int32, FAuraItemInstance> Items;
 

@@ -6,18 +6,22 @@
 #include "Inventory/Fragments/AuraItemFragment_LayoutBehavior.h"
 #include "Inventory/Fragments/AuraItemFragment_Size.h"
 
-FIntPoint UAuraGridInventoryLayout::GetItemSize(
-    const FAuraItemHandle& Handle) const {
-  const FAuraItemInstance* Item = Inventory->FindItem(Handle);
-  if (!Item) return FIntPoint(1, 1);
+FIntPoint
+UAuraGridInventoryLayout::GetItemSize(const FAuraItemHandle &Handle) const {
+  const FAuraItemInstance *Item = Inventory->FindItem(Handle);
+  if (!Item)
+    return FIntPoint(1, 1);
 
-  const UAuraItemFragment_Size* Frag =
+  const UAuraItemFragment_Size *Frag =
       Item->FindFragment<UAuraItemFragment_Size>();
   return Frag ? Frag->Size : FIntPoint(1, 1);
 }
 
-bool UAuraGridInventoryLayout::TryAddItem(const FAuraItemHandle& Handle) {
+bool UAuraGridInventoryLayout::TryAddItem(const FAuraItemHandle &Handle) {
   if (!IsSpatialItem(Handle)) {
+    UE_LOG(
+        LogTemp, Warning,
+        TEXT("Non Spatial item came to layout, Skipping validation for it."));
     return true;
   }
 
@@ -44,22 +48,26 @@ bool UAuraGridInventoryLayout::TryAddItem(const FAuraItemHandle& Handle) {
 
 bool UAuraGridInventoryLayout::CanPlaceItemAt(FIntPoint Position,
                                               FIntPoint Size) const {
-  if (Position.X < 0 || Position.Y < 0) return false;
-  if (Position.X + Size.X > Columns || Position.Y + Size.Y > Rows) return false;
+  if (Position.X < 0 || Position.Y < 0)
+    return false;
+  if (Position.X + Size.X > Columns || Position.Y + Size.Y > Rows)
+    return false;
 
   for (int y = 0; y < Size.Y; y++)
     for (int x = 0; x < Size.X; x++)
-      if (OccupiedCells.Contains(Position + FIntPoint(x, y))) return false;
+      if (OccupiedCells.Contains(Position + FIntPoint(x, y)))
+        return false;
 
   return true;
 }
 
-void UAuraGridInventoryLayout::RemoveItem(const FAuraItemHandle& Handle) {
+void UAuraGridInventoryLayout::RemoveItem(const FAuraItemHandle &Handle) {
   if (!IsSpatialItem(Handle)) {
     return;
   }
 
-  if (!ItemPositions.Contains(Handle)) return;
+  if (!ItemPositions.Contains(Handle))
+    return;
 
   FIntPoint Pos = ItemPositions[Handle];
   FIntPoint Size = GetItemSize(Handle);
@@ -77,9 +85,9 @@ bool UAuraGridInventoryLayout::IsCellOccupied(FIntPoint Cell) const {
   return OccupiedCells.Contains(Cell);
 }
 
-bool UAuraGridInventoryLayout::GetItemPosition(const FAuraItemHandle& Handle,
-                                               FIntPoint& OutPos) const {
-  if (const FIntPoint* Found = ItemPositions.Find(Handle)) {
+bool UAuraGridInventoryLayout::GetItemPosition(const FAuraItemHandle &Handle,
+                                               FIntPoint &OutPos) const {
+  if (const FIntPoint *Found = ItemPositions.Find(Handle)) {
     OutPos = *Found;
     return true;
   }
@@ -87,15 +95,15 @@ bool UAuraGridInventoryLayout::GetItemPosition(const FAuraItemHandle& Handle,
 }
 
 void UAuraGridInventoryLayout::GetAllItems(
-    TArray<FAuraItemHandle>& OutHandles) const {
+    TArray<FAuraItemHandle> &OutHandles) const {
   OutHandles.Reset();
 
-  for (const auto& Pair : ItemPositions) {
+  for (const auto &Pair : ItemPositions) {
     OutHandles.Add(Pair.Key);
   }
 }
 
-bool UAuraGridInventoryLayout::TryAddItemAt(const FAuraItemHandle& Handle,
+bool UAuraGridInventoryLayout::TryAddItemAt(const FAuraItemHandle &Handle,
                                             FIntPoint Position) {
   if (!IsSpatialItem(Handle)) {
     return true;
@@ -119,12 +127,14 @@ bool UAuraGridInventoryLayout::TryAddItemAt(const FAuraItemHandle& Handle,
 }
 
 bool UAuraGridInventoryLayout::IsSpatialItem(
-    const FAuraItemHandle& Handle) const {
-  const FAuraItemInstance* Item = Inventory->FindItem(Handle);
-  if (!Item) return true;  // fail-safe: treat as spatial
+    const FAuraItemHandle &Handle) const {
+  const FAuraItemInstance *Item = Inventory->FindItem(Handle);
+  if (!Item)
+    return true; // fail-safe: treat as spatial
 
-  const auto* Behavior = Item->FindFragment<UAuraItemFragment_LayoutBehavior>();
-  if (!Behavior) return true;
+  const auto *Behavior = Item->FindFragment<UAuraItemFragment_LayoutBehavior>();
+  if (!Behavior)
+    return true;
 
   return Behavior->LayoutBehaviorTag != TAG_AURA_INVENTORY_LAYOUT_NONSPATIAL;
 }
