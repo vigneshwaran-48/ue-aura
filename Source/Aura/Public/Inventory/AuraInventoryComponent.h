@@ -51,6 +51,9 @@ public:
   UFUNCTION(BlueprintCallable, Category = "Inventory")
   TArray<FAuraItemHandle> GetAllItemHandles() const;
 
+  UFUNCTION(BlueprintCallable, Category = "Inventory")
+  bool RemoveItem(const FAuraItemHandle &Handle);
+
 private:
   UPROPERTY()
   TMap<int32, FAuraItemInstance> Items;

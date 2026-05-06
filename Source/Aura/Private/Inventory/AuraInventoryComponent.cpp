@@ -193,3 +193,22 @@ UAuraInventoryComponent::GetAllItemHandles() const {
 
   return Result;
 }
+
+bool UAuraInventoryComponent::RemoveItem(
+    const FAuraItemHandle& Handle) {
+  if (!Handle.IsValid()) {
+    return false;
+  }
+
+  if (!Items.Contains(Handle.Id)) {
+    return false;
+  }
+
+  if (Layout) {
+    Layout->RemoveItem(Handle);
+  }
+
+  Items.Remove(Handle.Id);
+
+  return true;
+}
