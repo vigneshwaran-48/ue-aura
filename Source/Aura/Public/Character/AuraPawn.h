@@ -2,8 +2,9 @@
 
 #include "AbilitySystem/AuraAbilitySet.h"
 #include "AbilitySystemInterface.h"
-#include "Equipment/AuraEquipmentInterface.h"
+#include "Character/AuraPawnDataProvider.h"
 #include "CoreMinimal.h"
+#include "Equipment/AuraEquipmentInterface.h"
 #include "GameFramework/Pawn.h"
 #include "GameplayTagContainer.h"
 #include "AuraPawn.generated.h"
@@ -23,13 +24,16 @@ class UAuraInventoryComponent;
 class UAuraUIManagerComponent;
 
 UCLASS()
-class AURA_API AAuraPawn : public APawn, public IAbilitySystemInterface, public IAuraEquipmentInterface {
+class AURA_API AAuraPawn : public APawn,
+                           public IAbilitySystemInterface,
+                           public IAuraEquipmentInterface,
+                           public IAuraPawnDataProvider {
   GENERATED_BODY()
 
- public:
+public:
   AAuraPawn();
 
- protected:
+protected:
   virtual void BeginPlay() override;
 
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Aura|GAS")
@@ -50,31 +54,29 @@ class AURA_API AAuraPawn : public APawn, public IAbilitySystemInterface, public 
   UPROPERTY(VisibleAnywhere)
   TObjectPtr<UAuraUIManagerComponent> UIManagerComponent;
 
-  UPROPERTY(Transient, VisibleInstanceOnly)
-  TWeakObjectPtr<UCommonActivatableWidget> HUDLayoutWidget;
-
   UPROPERTY(EditDefaultsOnly, Category = "Aura|Interaction")
   TEnumAsByte<ECollisionChannel> InteractionTraceChannel;
 
   UPROPERTY(EditDefaultsOnly, Category = "Aura")
   TObjectPtr<UAuraPawnData> PawnData;
 
- public:
+public:
   virtual void Tick(float DeltaTime) override;
 
-  virtual void PossessedBy(AController* NewController) override;
+  virtual void PossessedBy(AController *NewController) override;
 
   virtual void UnPossessed() override;
 
-  virtual void SetupPlayerInputComponent(
-      UInputComponent* PlayerInputComponent) override;
+  virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-  virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+  virtual UAbilitySystemComponent *GetAbilitySystemComponent() const override;
 
-  virtual USceneComponent* GetEquipmentAttachComponent_Implementation(
-      FName SocketName) const override;
+  virtual USceneComponent *
+  GetEquipmentAttachComponent_Implementation(FName SocketName) const override;
 
- private:
+  virtual const UAuraPawnData *GetPawnData_Implementation() const override;
+
+private:
   void InputAbilityPressed(FGameplayTag InputTag);
 
   void InputAbilityReleased(FGameplayTag InputTag);
@@ -84,8 +86,4 @@ class AURA_API AAuraPawn : public APawn, public IAbilitySystemInterface, public 
   void InitializeFromPawnData();
 
   void InitializeAbilities();
-
-  void InitializeInput();
-
-  void InitializeUI();
 };
