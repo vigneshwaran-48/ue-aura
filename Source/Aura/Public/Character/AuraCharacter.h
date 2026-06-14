@@ -1,85 +1,88 @@
 #pragma once
 
-#include "AbilitySystemInterface.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "AbilitySystemInterface.h"
+#include "Equipment/AuraEquipmentInterface.h"
+#include "Character/AuraPawnDataProvider.h"
 #include "GameplayTagContainer.h"
 #include "AbilitySystem/AuraAbilitySet.h"
 #include "AuraCharacter.generated.h"
 
 class UAuraAbilitySystemComponent;
-class UAuraInputConfig;
-class UAuraInputComponent;
 class UAbilitySystemComponent;
-class UInputMappingContext;
 class UAuraEquipmentManagerComponent;
 class UAuraInteractionComponent;
-class UCommonActivatableWidget;
-class UAuraHUDLayout;
 class UAuraInventoryComponent;
+class UAuraOverlayComponent;
+class UAuraUIManagerComponent;
+class UAuraPawnData;
 
 UCLASS()
 class AURA_API AAuraCharacter : public ACharacter,
-                                public IAbilitySystemInterface {
-  GENERATED_BODY()
+                                public IAbilitySystemInterface,
+                                public IAuraEquipmentInterface,
+                                public IAuraPawnDataProvider 
+{
+    GENERATED_BODY()
 
- public:
-  AAuraCharacter();
+public:
+    AAuraCharacter();
 
-  virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+    // Actor Lifecycle
+    virtual void BeginPlay() override;
+    virtual void Tick(float DeltaTime) override;
+    virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+    virtual void PossessedBy(AController* NewController) override;
+    virtual void UnPossessed() override;
 
- protected:
-  virtual void BeginPlay() override;
+    // IAbilitySystemInterface
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-  virtual void PossessedBy(AController* NewController) override;
+    // IAuraEquipmentInterface
+    virtual USceneComponent* GetEquipmentAttachComponent_Implementation(FName SocketName) const override;
 
-  virtual void UnPossessed() override;
+    // IAuraPawnDataProvider
+    virtual const UAuraPawnData* GetPawnData_Implementation() const override;
 
-  virtual void SetupPlayerInputComponent(
-      UInputComponent* PlayerInputComponent) override;
+protected:
+    // Core GAS Component
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Aura|GAS")
+    TObjectPtr<UAuraAbilitySystemComponent> AbilitySystemComponent;
 
-  virtual void Tick(float DeltaTime) override;
+    // Modular Subsystems / Components
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Aura|Components")
+    TObjectPtr<UAuraInteractionComponent> InteractionComponent;
 
- protected:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Aura|Components")
+    TObjectPtr<UAuraEquipmentManagerComponent> EquipmentManager;
 
-  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Aura|GAS")
-  TObjectPtr<UAuraAbilitySystemComponent> AbilitySystemComponent;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Aura|Components")
+    TObjectPtr<UAuraInventoryComponent> InventoryComponent;
 
-  UPROPERTY(EditDefaultsOnly, Category = "Aura|Input")
-  TObjectPtr<UInputMappingContext> DefaultMappingContext;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Aura|Components")
+    TObjectPtr<UAuraOverlayComponent> OverlayComponent;
 
-  UPROPERTY(EditDefaultsOnly, Category = "Aura|Input")
-  TObjectPtr<UAuraInputConfig> InputConfig;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Aura|Components")
+    TObjectPtr<UAuraUIManagerComponent> UIManagerComponent;
 
-  UPROPERTY(EditDefaultsOnly, Category = "Aura|Ability System")
-  UAuraAbilitySet* DefaultAbilitySet;
+    // Configuration / Settings
+    UPROPERTY(EditDefaultsOnly, Category = "Aura|Interaction")
+    TEnumAsByte<ECollisionChannel> InteractionTraceChannel;
 
-  UPROPERTY(VisibleAnywhere)
-  TObjectPtr<UAuraInteractionComponent> InteractionComponent;
+    // Unified Lyra-style Initialization Data Asset
+    UPROPERTY(EditDefaultsOnly, Category = "Aura|Data")
+    TObjectPtr<UAuraPawnData> PawnData;
 
-  UPROPERTY(VisibleAnywhere)
-  TObjectPtr<UAuraEquipmentManagerComponent> EquipmentManager;
+private:
+    // Enhanced Input & Ability Binding Callbacks
+    void InputAbilityPressed(FGameplayTag InputTag);
+    void InputAbilityReleased(FGameplayTag InputTag);
 
-  UPROPERTY(VisibleAnywhere)
-  TObjectPtr<UAuraInventoryComponent> InventoryComponent;
+    // Initialization Pipeline Helpers
+    void InitializeFromPawnData();
+    void InitializeAbilities();
 
-  /** The HUD Layout widget to use (must be derived from Aura HUD Layout) */
-  UPROPERTY(EditDefaultsOnly, DisplayName = "Aura|HUD Layout")
-  TSubclassOf<UAuraHUDLayout> HUDLayoutClass;
-
-  /** Used to keep track of the widget that was created to be our HUD */
-  UPROPERTY(Transient, VisibleInstanceOnly)
-  TWeakObjectPtr<UCommonActivatableWidget> HUDLayoutWidget;
-
-  UPROPERTY(EditDefaultsOnly, DisplayName = "Aura|Interaction")
-  TEnumAsByte<ECollisionChannel> InteractionTraceChannel;
-
- private:
-
-  void InputAbilityPressed(FGameplayTag InputTag);
-
-  void InputAbilityReleased(FGameplayTag InputTag);
-
-  FAuraAbilitySet_GrantedHandles AbilitySetHandles;
-
+    // Tracks handles granted by the data asset's ability sets
+    FAuraAbilitySet_GrantedHandles AbilitySetHandles;
 };

@@ -1,73 +1,70 @@
 #include "Character/AuraCharacter.h"
 
-#include "AbilitySystem/AuraAbilitySet.h"
 #include "AbilitySystemComponent.h"
+#include "Animation/Overlay/AuraOverlayComponent.h"
 #include "AuraAbilitySystemComponent.h"
-#include "AuraGameplayTags.h"
-#include "CommonUIExtensions.h"
-#include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
+#include "Character/AuraPawnData.h"
 #include "Equipment/AuraEquipmentManagerComponent.h"
-#include "GameFramework/PlayerController.h"
-#include "GameFramework/PlayerState.h"
+#include "GameplayTagContainer.h"
 #include "Input/AuraEnhancedInputComponent.h"
 #include "Input/AuraInputConfig.h"
 #include "Interaction/AuraInteractionComponent.h"
 #include "Inventory/AuraInventoryComponent.h"
-#include "UI/AuraHUDLayout.h"
+#include "UI/AuraUIManagerComponent.h"
 
 AAuraCharacter::AAuraCharacter() {
   PrimaryActorTick.bCanEverTick = true;
 
+  // Instantiate all framework components matching the Pawn setup
   AbilitySystemComponent = CreateDefaultSubobject<UAuraAbilitySystemComponent>(
       "AbilitySystemComponent");
   EquipmentManager = CreateDefaultSubobject<UAuraEquipmentManagerComponent>(
       "EquipmentManager");
   InteractionComponent =
       CreateDefaultSubobject<UAuraInteractionComponent>("InteractionComponent");
-
-  InteractionComponent->SetInteractionTraceChannel(InteractionTraceChannel);
-
   InventoryComponent =
       CreateDefaultSubobject<UAuraInventoryComponent>("InventoryComponent");
+  OverlayComponent =
+      CreateDefaultSubobject<UAuraOverlayComponent>("OverlayComponent");
+  UIManagerComponent =
+      CreateDefaultSubobject<UAuraUIManagerComponent>("UIManagerComponent");
+
+  // Initialize specific collision settings for tracking
+  if (InteractionComponent) {
+    InteractionComponent->SetInteractionTraceChannel(InteractionTraceChannel);
+  }
 }
 
-UAbilitySystemComponent* AAuraCharacter::GetAbilitySystemComponent() const {
+void AAuraCharacter::BeginPlay() { Super::BeginPlay(); }
+
+void AAuraCharacter::Tick(float DeltaTime) {
+  Super::Tick(DeltaTime);
+
+  if (AbilitySystemComponent && IsLocallyControlled()) {
+    AbilitySystemComponent->ProcessAbilityInput(DeltaTime, false);
+  }
+}
+
+UAbilitySystemComponent *AAuraCharacter::GetAbilitySystemComponent() const {
   return AbilitySystemComponent;
 }
 
-void AAuraCharacter::BeginPlay() {
-  Super::BeginPlay();
-
-  if (DefaultAbilitySet) {
-    DefaultAbilitySet->GiveToAbilitySystem(AbilitySystemComponent,
-                                           AbilitySetHandles);
-  }
-
-  if (APlayerController* PC = Cast<APlayerController>(GetController())) {
-    if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer()) {
-      if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-              LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>()) {
-        if (DefaultMappingContext) {
-          Subsystem->AddMappingContext(DefaultMappingContext, 0);
-        }
-      }
-    }
-  }
-}
-
 void AAuraCharacter::SetupPlayerInputComponent(
-    UInputComponent* PlayerInputComponent) {
+    UInputComponent *PlayerInputComponent) {
   Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-  UAuraEnhancedInputComponent* AuraInputComponent =
+  UAuraEnhancedInputComponent *AuraInputComponent =
       CastChecked<UAuraEnhancedInputComponent>(PlayerInputComponent);
 
-  if (InputConfig) {
-    AuraInputComponent->BindAbilityActions(
-        InputConfig, this, &AAuraCharacter::InputAbilityPressed,
-        &AAuraCharacter::InputAbilityReleased);
+  if (!PawnData || !PawnData->InputConfig) {
+    return;
   }
+
+  // Bind Ability Actions directly using the InputConfig defined inside the
+  // structured Pawn Data
+  AuraInputComponent->BindAbilityActions(PawnData->InputConfig, this,
+                                         &AAuraCharacter::InputAbilityPressed,
+                                         &AAuraCharacter::InputAbilityReleased);
 }
 
 void AAuraCharacter::InputAbilityPressed(FGameplayTag InputTag) {
@@ -82,36 +79,49 @@ void AAuraCharacter::InputAbilityReleased(FGameplayTag InputTag) {
   }
 }
 
-void AAuraCharacter::PossessedBy(AController* NewController) {
+void AAuraCharacter::PossessedBy(AController *NewController) {
   Super::PossessedBy(NewController);
 
-  UE_LOG(LogTemp, Log, TEXT("Inside character possessedby"));
+  // Server-side entry point for character capability initialization
+  InitializeFromPawnData();
+}
 
-  const APlayerController* PC = Cast<APlayerController>(NewController);
-  if (ensure(PC)) {
-    // Add HUD Layout widget to the player's Game UI Layer
-    UE_LOG(LogTemp, Log, TEXT("Pushing Game HUD [%s] to UI"),
-           *GetNameSafe(HUDLayoutClass));
-    HUDLayoutWidget = UCommonUIExtensions::PushContentToLayer_ForPlayer(
-        PC->GetLocalPlayer(), TAG_UI_Layer_Game, HUDLayoutClass);
+void AAuraCharacter::UnPossessed() { Super::UnPossessed(); }
+
+void AAuraCharacter::InitializeFromPawnData() { InitializeAbilities(); }
+
+void AAuraCharacter::InitializeAbilities() {
+  if (!AbilitySystemComponent || !PawnData)
+    return;
+
+  for (const UAuraAbilitySet *Set : PawnData->AbilitySets) {
+    if (Set) {
+      // FIXED: Passing by reference directly
+      Set->GiveToAbilitySystem(AbilitySystemComponent, AbilitySetHandles);
+    }
   }
 }
 
-void AAuraCharacter::UnPossessed() {
-  // Remove any HUD we added to the player's UI
-  if (HUDLayoutWidget.IsValid()) {
-    UE_LOG(LogTemp, Log, TEXT("Cleaning up HUD Layout Widget"));
-    UCommonUIExtensions::PopContentFromLayer(HUDLayoutWidget.Get());
-    HUDLayoutWidget.Reset();
+USceneComponent *AAuraCharacter::GetEquipmentAttachComponent_Implementation(
+    FName SocketName) const {
+  // ACharacter gives us a native SkeletalMeshComponent pointer via GetMesh()
+  // without running FindComponent queries.
+  if (USkeletalMeshComponent *SkelMesh = GetMesh()) {
+    return SkelMesh;
   }
 
-  Super::UnPossessed();
+  if (USceneComponent *SceneComp = GetRootComponent()) {
+    UE_LOG(LogTemp, Warning,
+           TEXT("Using RootComponent as fallback attach for %s"),
+           *GetNameSafe(this));
+    return SceneComp;
+  }
+
+  UE_LOG(LogTemp, Error, TEXT("No valid attach component found on %s"),
+         *GetNameSafe(this));
+  return nullptr;
 }
 
-void AAuraCharacter::Tick(float DeltaTime) {
-  Super::Tick(DeltaTime);
-
-  if (AbilitySystemComponent && IsLocallyControlled()) {
-    AbilitySystemComponent->ProcessAbilityInput(DeltaTime, false);
-  }
+const UAuraPawnData *AAuraCharacter::GetPawnData_Implementation() const {
+  return PawnData;
 }
