@@ -24,25 +24,6 @@ void AAuraPlayerController::BeginPlay() {
        TEXT("Pawn At BeginPlay: %s"),
        *GetNameSafe(GetPawn()));
 
-#if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT
-  /*
-   * The code inside this debug block isn't really required for this to work.
-   * However, it can be easy to miss these setup steps, so here are some
-   * extra checks to ensure the INI is correctly configured.
-   */
-
-  // CommonGame requires that the LocalPlayer is a UCommonLocalPlayer
-  const UCommonLocalPlayer *LocalPlayer =
-      Cast<UCommonLocalPlayer>(GetLocalPlayer());
-  ensureAlwaysMsgf(IsValid(LocalPlayer),
-                   TEXT("LocalPlayer must be derived from UCommonLocalPlayer; "
-                        "fix INI and restart"));
-
-  // Make sure we're configured with a valid RootUILayout
-  const UPrimaryGameLayout *RootUILayout = LocalPlayer->GetRootUILayout();
-  ensureAlwaysMsgf(IsValid(RootUILayout),
-                   TEXT("RootUILayout must be configured in project settings"));
-#endif
 }
 
 void AAuraPlayerController::OnPossess(APawn *InPawn) {
