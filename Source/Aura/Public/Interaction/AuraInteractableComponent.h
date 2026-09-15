@@ -8,7 +8,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAuraOnInteractSignature, AActor*,
                                             Interactor);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAuraOnEventSignature);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAuraOnEventSignature, AActor*, Interactor);
 
 UCLASS(ClassGroup = (Aura), meta = (BlueprintSpawnableComponent))
 class AURA_API UAuraInteractableComponent : public UActorComponent {
@@ -36,9 +36,13 @@ class AURA_API UAuraInteractableComponent : public UActorComponent {
   UPROPERTY(BlueprintAssignable, Category = "Interaction")
   FAuraOnEventSignature OnFocusLost;
 
-  void HandleFocusGained() const;
+  void HandleFocusGained(AActor* Interactor) const;
 
-  void HandleFocusLost() const;
+  void HandleFocusLost(AActor* Interactor) const;
+
+  void HandleHighlightEnabled(AActor* Interactor) const;
+
+  void HandleHighlightDisabled(AActor* Interactor) const;
 
  protected:
 

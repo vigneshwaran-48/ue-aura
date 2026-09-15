@@ -22,6 +22,7 @@ class UAuraPawnData;
 class UAuraOverlayComponent;
 class UAuraInventoryComponent;
 class UAuraUIManagerComponent;
+class UAuraIndicatorManagerComponent;
 
 UCLASS()
 class AURA_API AAuraPawn : public APawn,
@@ -53,6 +54,9 @@ protected:
 
   UPROPERTY(VisibleAnywhere)
   TObjectPtr<UAuraUIManagerComponent> UIManagerComponent;
+
+  UPROPERTY(VisibleAnywhere)
+  TObjectPtr<UAuraIndicatorManagerComponent> IndicatorManagerComponent;
 
   UPROPERTY(EditDefaultsOnly, Category = "Aura|Interaction")
   TEnumAsByte<ECollisionChannel> InteractionTraceChannel;

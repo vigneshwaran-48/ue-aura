@@ -15,10 +15,18 @@ void UAuraInteractableComponent::Interact(AActor* Interactor) const {
   OnInteract.Broadcast(Interactor);
 }
 
-void UAuraInteractableComponent::HandleFocusGained() const {
-  OnFocusGained.Broadcast();
+void UAuraInteractableComponent::HandleFocusGained(AActor* Interactor) const {
+  OnFocusGained.Broadcast(Interactor);
 }
 
-void UAuraInteractableComponent::HandleFocusLost() const {
-  OnFocusLost.Broadcast();
+void UAuraInteractableComponent::HandleFocusLost(AActor* Interactor) const {
+	OnFocusLost.Broadcast(Interactor);
+}
+
+void UAuraInteractableComponent::HandleHighlightDisabled(AActor* Interactor) const {
+	OnDisableHighlight.Broadcast(Interactor);
+}
+
+void UAuraInteractableComponent::HandleHighlightEnabled(AActor* Interactor) const {
+	OnHighlight.Broadcast(Interactor);
 }

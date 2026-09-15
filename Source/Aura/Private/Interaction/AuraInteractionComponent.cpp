@@ -69,11 +69,11 @@ void UAuraInteractionComponent::SetCurrentInteractable(
   CurrentInteractable = NewInteractable;
 
   if (PreviousInteractable) {
-    PreviousInteractable->OnFocusLost.Broadcast();
+      PreviousInteractable->HandleFocusLost(GetOwner());
   }
 
   if (CurrentInteractable) {
-    CurrentInteractable->OnFocusGained.Broadcast();
+      CurrentInteractable->HandleFocusGained(GetOwner());
   }
   BroadcastInteractionMessage();
 }
@@ -135,13 +135,13 @@ void UAuraInteractionComponent::UpdateHighlights(
     const TArray<UAuraInteractableComponent*>& NewInteractables) {
   for (UAuraInteractableComponent* Old : NearbyInteractables) {
     if (!NewInteractables.Contains(Old)) {
-      Old->OnDisableHighlight.Broadcast();
+        Old->HandleHighlightDisabled(GetOwner());
     }
   }
 
   for (UAuraInteractableComponent* New : NewInteractables) {
     if (!NearbyInteractables.Contains(New)) {
-      New->OnHighlight.Broadcast();
+        New->HandleHighlightEnabled(GetOwner());
     }
   }
 
