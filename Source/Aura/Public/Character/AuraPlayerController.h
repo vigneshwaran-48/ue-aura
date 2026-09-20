@@ -10,6 +10,7 @@ class UAuraAbilitySystemComponent;
 class UInputMappingContext;
 class UCommonActivatableWidget;
 class UAuraPawnData;
+class UAuraIndicatorManagerComponent;
 
 UCLASS()
 class AURA_API AAuraPlayerController : public ACommonPlayerController {
@@ -25,6 +26,9 @@ protected:
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
   TArray<FAuraUILayoutEntry> InitialUILayouts;
+
+  UPROPERTY(VisibleAnywhere)
+  TObjectPtr<UAuraIndicatorManagerComponent> IndicatorManagerComponent;
 
   void BeginPlay() override;
 

@@ -36,18 +36,31 @@ class AURA_API UAuraInteractableComponent : public UActorComponent {
   UPROPERTY(BlueprintAssignable, Category = "Interaction")
   FAuraOnEventSignature OnFocusLost;
 
-  void HandleFocusGained(AActor* Interactor) const;
+  UFUNCTION(BlueprintCallable, Category = "Interaction")
+  bool IsFocused() const { return bIsFocused; }
 
-  void HandleFocusLost(AActor* Interactor) const;
+  UFUNCTION(BlueprintCallable, Category = "Interaction")
+  bool IsHighlighted() const { return bIsHighlighted; }
 
-  void HandleHighlightEnabled(AActor* Interactor) const;
+  void HandleFocusGained(AActor* Interactor);
 
-  void HandleHighlightDisabled(AActor* Interactor) const;
+  void HandleFocusLost(AActor* Interactor);
+
+  void HandleHighlightEnabled(AActor* Interactor);
+
+  void HandleHighlightDisabled(AActor* Interactor);
 
  protected:
 
   /** Interaction data */
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
   TArray<FAuraInteractionOption> InteractionOptions;
+
+private:
+	UPROPERTY(VisibleAnywhere, Category = "Interaction|State")
+	bool bIsFocused = false;
+
+	UPROPERTY(VisibleAnywhere, Category = "Interaction|State")
+	bool bIsHighlighted = false;
 
 };

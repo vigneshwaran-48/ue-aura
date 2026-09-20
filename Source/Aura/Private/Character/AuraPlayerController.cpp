@@ -12,10 +12,15 @@
 #include "CommonUIExtensions.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
+#include "UI/IndicatorSystem/AuraIndicatorManagerComponent.h"
 
 AAuraPlayerController::AAuraPlayerController(
     const FObjectInitializer &ObjectInitializer)
-    : Super(ObjectInitializer) {}
+    : Super(ObjectInitializer) {
+
+    IndicatorManagerComponent =
+        CreateDefaultSubobject<UAuraIndicatorManagerComponent>("IndicatorManagerComponent");
+}
 
 void AAuraPlayerController::BeginPlay() {
   Super::BeginPlay();

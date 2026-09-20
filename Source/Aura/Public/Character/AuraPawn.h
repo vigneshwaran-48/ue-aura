@@ -55,12 +55,6 @@ protected:
   UPROPERTY(VisibleAnywhere)
   TObjectPtr<UAuraUIManagerComponent> UIManagerComponent;
 
-  UPROPERTY(VisibleAnywhere)
-  TObjectPtr<UAuraIndicatorManagerComponent> IndicatorManagerComponent;
-
-  UPROPERTY(EditDefaultsOnly, Category = "Aura|Interaction")
-  TEnumAsByte<ECollisionChannel> InteractionTraceChannel;
-
   UPROPERTY(EditDefaultsOnly, Category = "Aura")
   TObjectPtr<UAuraPawnData> PawnData;
 

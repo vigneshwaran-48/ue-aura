@@ -28,11 +28,6 @@ AAuraCharacter::AAuraCharacter() {
       CreateDefaultSubobject<UAuraOverlayComponent>("OverlayComponent");
   UIManagerComponent =
       CreateDefaultSubobject<UAuraUIManagerComponent>("UIManagerComponent");
-
-  // Initialize specific collision settings for tracking
-  if (InteractionComponent) {
-    InteractionComponent->SetInteractionTraceChannel(InteractionTraceChannel);
-  }
 }
 
 void AAuraCharacter::BeginPlay() { Super::BeginPlay(); }

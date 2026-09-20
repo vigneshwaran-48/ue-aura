@@ -66,10 +66,6 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Aura|Components")
     TObjectPtr<UAuraUIManagerComponent> UIManagerComponent;
 
-    // Configuration / Settings
-    UPROPERTY(EditDefaultsOnly, Category = "Aura|Interaction")
-    TEnumAsByte<ECollisionChannel> InteractionTraceChannel;
-
     // Unified Lyra-style Initialization Data Asset
     UPROPERTY(EditDefaultsOnly, Category = "Aura|Data")
     TObjectPtr<UAuraPawnData> PawnData;

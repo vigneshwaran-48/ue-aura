@@ -16,10 +16,6 @@ class AURA_API UAuraInteractionComponent : public UActorComponent {
   AActor* GetInteractableActor() const;
   UAuraInteractableComponent* GetInteractableComponent() const;
 
-  void SetInteractionTraceChannel(ECollisionChannel NewTraceChannel) {
-    TraceChannel = NewTraceChannel;
-  }
-
  protected:
   virtual void BeginPlay() override;
 
@@ -44,7 +40,7 @@ class AURA_API UAuraInteractionComponent : public UActorComponent {
   void BroadcastInteractionMessage();
 
   UPROPERTY(EditAnywhere, Category = "Interaction")
-  float TraceDistance = 500.f;
+  float TraceDistance = 80.f;
 
   UPROPERTY(EditAnywhere, Category = "Interaction")
   float TraceRadius = 30.f;
@@ -57,5 +53,9 @@ class AURA_API UAuraInteractionComponent : public UActorComponent {
 
   FTimerHandle ScanTimer;
 
-  ECollisionChannel TraceChannel = ECC_Visibility;
+  UPROPERTY(EditDefaultsOnly, Category = "Aura|Interaction")
+  TEnumAsByte<ECollisionChannel> InteractionTraceChannel;
+
+  UPROPERTY(EditDefaultsOnly, Category = "Aura|Interaction")
+  TEnumAsByte<ECollisionChannel> InteractionObjectChannel;
 };

@@ -12,7 +12,6 @@
 #include "Interaction/AuraInteractionComponent.h"
 #include "Inventory/AuraInventoryComponent.h"
 #include "UI/AuraUIManagerComponent.h"
-#include "UI/IndicatorSystem/AuraIndicatorManagerComponent.h"
 
 AAuraPawn::AAuraPawn() {
   PrimaryActorTick.bCanEverTick = true;
@@ -29,10 +28,6 @@ AAuraPawn::AAuraPawn() {
       CreateDefaultSubobject<UAuraInventoryComponent>("InventoryComponent");
   UIManagerComponent =
       CreateDefaultSubobject<UAuraUIManagerComponent>("UIManagerComponent");
-  IndicatorManagerComponent =
-      CreateDefaultSubobject<UAuraIndicatorManagerComponent>("IndicatorManagerComponent");
-
-  InteractionComponent->SetInteractionTraceChannel(InteractionTraceChannel);
 }
 
 void AAuraPawn::Tick(float DeltaTime) {

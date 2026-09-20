@@ -32,11 +32,15 @@ USceneComponent* AAuraInteractableBase::GetIndicatorTargetComponent_Implementati
 
 void AAuraInteractableBase::OnFocusGained(AActor* Interactor)
 {
+	OnHighlightLost(Interactor);
 	CreateIndicator(Interactor, PromptIndicatorWidgetClass, ActivePromptDescriptor);
 }
 
 void AAuraInteractableBase::OnFocusLost(AActor* Interactor)
 {
+	if (InteractableComponent->IsHighlighted()) {
+		OnHighlightGained(Interactor);
+	}
 	ClearIndicator(Interactor, ActivePromptDescriptor);
 }
 
@@ -59,14 +63,25 @@ UAuraIndicatorManagerComponent* AAuraInteractableBase::GetIndicatorManagerFromIn
 {
 	if (Interactor)
 	{
-		if (UAuraIndicatorManagerComponent* Manager = Interactor->FindComponentByClass<UAuraIndicatorManagerComponent>())
+		AController* InteractorController = nullptr;
+
+		if (AController* AsController = Cast<AController>(Interactor))
 		{
-			return Manager;
+			InteractorController = AsController;
+		} else if (const APawn* Pawn = Cast<APawn>(Interactor))
+		{
+			InteractorController = Pawn->GetController();
+		} else
+		{
+			InteractorController = Interactor->GetInstigatorController();
 		}
 
-		if (UAuraIndicatorManagerComponent* Manager = Cast<UAuraIndicatorManagerComponent>(Interactor->GetComponentByClass(UAuraIndicatorManagerComponent::StaticClass())))
+		if (InteractorController)
 		{
-			return Manager;
+			if (UAuraIndicatorManagerComponent* Manager = InteractorController->FindComponentByClass<UAuraIndicatorManagerComponent>())
+			{
+				return Manager;
+			}
 		}
 	}
 
