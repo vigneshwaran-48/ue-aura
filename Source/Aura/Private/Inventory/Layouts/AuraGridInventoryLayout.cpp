@@ -3,6 +3,7 @@
 #include "AuraGameplayTags.h"
 #include "Inventory/AuraInventoryComponent.h"
 #include "Inventory/AuraItemInstance.h"
+#include "Inventory/AuraItemDefinition.h"
 #include "Inventory/Fragments/AuraItemFragment_LayoutBehavior.h"
 #include "Inventory/Fragments/AuraItemFragment_Size.h"
 
@@ -124,6 +125,33 @@ bool UAuraGridInventoryLayout::TryAddItemAt(const FAuraItemHandle &Handle,
   }
 
   return true;
+}
+
+bool UAuraGridInventoryLayout::CanAddItem(const UAuraItemDefinition* ItemDef) const
+{
+    if (!ItemDef) return false;
+
+    const UAuraItemFragment_LayoutBehavior* Behavior = ItemDef->FindFragment<UAuraItemFragment_LayoutBehavior>();
+    if (Behavior && Behavior->LayoutBehaviorTag == TAG_AURA_INVENTORY_LAYOUT_NONSPATIAL)
+    {
+        return true;
+    }
+
+    const UAuraItemFragment_Size* SizeFrag = ItemDef->FindFragment<UAuraItemFragment_Size>();
+    FIntPoint Size = SizeFrag ? SizeFrag->Size : FIntPoint(1, 1);
+
+    for (int32 y = 0; y < Rows; y++)
+    {
+        for (int32 x = 0; x < Columns; x++)
+        {
+            if (CanPlaceItemAt(FIntPoint(x, y), Size))
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 bool UAuraGridInventoryLayout::IsSpatialItem(

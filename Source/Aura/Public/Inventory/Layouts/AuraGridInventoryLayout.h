@@ -4,6 +4,8 @@
 #include "CoreMinimal.h"
 #include "AuraGridInventoryLayout.generated.h"
 
+class UAuraItemDefinition;
+
 UCLASS(Blueprintable, EditInlineNew)
 class AURA_API UAuraGridInventoryLayout : public UAuraInventoryLayout {
   GENERATED_BODY()
@@ -21,6 +23,8 @@ class AURA_API UAuraGridInventoryLayout : public UAuraInventoryLayout {
   virtual bool TryAddItem(const FAuraItemHandle& Handle) override;
 
   virtual void RemoveItem(const FAuraItemHandle& Handle) override;
+
+  virtual bool CanAddItem(const UAuraItemDefinition* ItemDef) const override;
 
   bool CanPlaceItemAt(FIntPoint Position, FIntPoint Size) const;
 

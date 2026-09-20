@@ -33,6 +33,15 @@ void APickupInteractableBase::OnInteract(AActor* Interactor)
 {
 	Super::OnInteract(Interactor);
 
+	if (!Interactor || !ItemDefinition) return;
+
+	UAuraInventoryComponent* InventoryComp = Interactor->FindComponentByClass<UAuraInventoryComponent>();
+	if (!InventoryComp || !InventoryComp->CanAddItem(ItemDefinition))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cannot pick up %s: Inventory is full or has no fitting slot."), *GetNameSafe(this));
+		return;
+	}
+
 	APawn* Pawn = Cast<APawn>(Interactor);
 	if (!Pawn) return;
 

@@ -212,3 +212,10 @@ bool UAuraInventoryComponent::RemoveItem(
 
   return true;
 }
+
+bool UAuraInventoryComponent::CanAddItem(const UAuraItemDefinition* ItemDef) const {
+    if (!ItemDef) return false;
+    if (!Layout) return true;
+
+    return Layout->CanAddItem(ItemDef);
+}

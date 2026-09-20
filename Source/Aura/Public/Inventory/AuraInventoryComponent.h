@@ -54,6 +54,9 @@ public:
   UFUNCTION(BlueprintCallable, Category = "Inventory")
   bool RemoveItem(const FAuraItemHandle &Handle);
 
+  UFUNCTION(BlueprintCallable, Category = "Inventory")
+  bool CanAddItem(const UAuraItemDefinition* ItemDef) const;
+
 private:
   UPROPERTY()
   TMap<int32, FAuraItemInstance> Items;

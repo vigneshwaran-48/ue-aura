@@ -6,6 +6,7 @@
 #include "AuraInventoryLayout.generated.h"
 
 class UAuraInventoryComponent;
+class UAuraItemDefinition;
 
 UCLASS(Abstract, Blueprintable, EditInlineNew)
 class AURA_API UAuraInventoryLayout : public UObject {
@@ -21,6 +22,8 @@ class AURA_API UAuraInventoryLayout : public UObject {
 
   virtual void RemoveItem(const FAuraItemHandle& Handle)
       PURE_VIRTUAL(UAuraInventoryLayout::RemoveItem, );
+
+  virtual bool CanAddItem(const UAuraItemDefinition* ItemDef) const PURE_VIRTUAL(UAuraInventoryLayout::CanAddItem, return false;);
 
  protected:
   UPROPERTY()
