@@ -30,16 +30,16 @@ class AURA_API UAuraEquipmentInstance : public UObject {
   }
 
  protected:
-  UPROPERTY()
+  UPROPERTY(BlueprintReadOnly)
   TObjectPtr<UAuraEquipmentDefinition> EquipmentDefinition;
 
-  UPROPERTY()
+  UPROPERTY(BlueprintReadOnly)
   TObjectPtr<AActor> SpawnedActor;
 
-  UPROPERTY()
+  UPROPERTY(BlueprintReadOnly)
   FAuraAbilitySet_GrantedHandles GrantedHandles;
 
-  UPROPERTY()
+  UPROPERTY(BlueprintReadOnly)
   TObjectPtr<AActor> OwningActor;
 
   UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,

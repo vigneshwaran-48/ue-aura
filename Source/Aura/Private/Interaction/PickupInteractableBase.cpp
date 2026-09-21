@@ -4,6 +4,8 @@
 #include "Inventory/AuraInventoryComponent.h"
 #include "Inventory/AuraItemDefinition.h"
 #include "Interaction/Animation/AuraInteractionAnimInstance.h"
+#include "Equipment/AuraEquipmentManagerComponent.h"
+#include "Equipment/Fragments/AuraItemFragment_EquippableItem.h"
 #include "GameFramework/Pawn.h"
 
 APickupInteractableBase::APickupInteractableBase()
@@ -113,6 +115,13 @@ void APickupInteractableBase::CompletePickupAndAddToInventory(AActor* Interactor
 
 	if (AddedHandle.IsValid())
 	{
+
+		UAuraEquipmentManagerComponent* EquipmentManager = Interactor->FindComponentByClass<UAuraEquipmentManagerComponent>();
+
+		const UAuraItemFragment_EquippableItem* EquipmentDefinitionFrag = ItemDefinition->FindFragment<UAuraItemFragment_EquippableItem>();
+		if (EquipmentManager && EquipmentDefinitionFrag) {
+			EquipmentManager->EquipItem(EquipmentDefinitionFrag->EquipmentDefinition);
+		}
 		OnFocusLost(Interactor);
 		OnHighlightLost(Interactor);
 		Destroy();
