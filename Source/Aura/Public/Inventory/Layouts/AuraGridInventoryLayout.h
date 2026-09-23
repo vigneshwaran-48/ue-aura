@@ -32,6 +32,10 @@ class AURA_API UAuraGridInventoryLayout : public UAuraInventoryLayout {
 
   bool GetItemPosition(const FAuraItemHandle& Handle, FIntPoint& OutPos) const;
 
+  bool GetItemAtCell(
+      FIntPoint Cell,
+      FAuraItemHandle& OutHandle) const;
+
   bool TryAddItemAt(const FAuraItemHandle& Handle, FIntPoint Position);
 
   UFUNCTION(BlueprintCallable)
@@ -46,11 +50,13 @@ class AURA_API UAuraGridInventoryLayout : public UAuraInventoryLayout {
   UFUNCTION(BlueprintCallable)
   void GetAllItems(TArray<FAuraItemHandle>& OutHandles) const;
 
+  UFUNCTION(BlueprintCallable)
+  FIntPoint GetItemSize(const FAuraItemHandle& Handle) const;
+
  private:
   TMap<FAuraItemHandle, FIntPoint> ItemPositions;
-  TSet<FIntPoint> OccupiedCells;
 
-  FIntPoint GetItemSize(const FAuraItemHandle& Handle) const;
+  TSet<FIntPoint> OccupiedCells;
 
   bool IsSpatialItem(const FAuraItemHandle& Handle) const;
 };
