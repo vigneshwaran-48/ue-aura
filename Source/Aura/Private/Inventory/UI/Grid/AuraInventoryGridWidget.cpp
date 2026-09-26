@@ -505,12 +505,25 @@ void UAuraInventoryGridWidget::NativeOnDragCancelled(
 	UAuraInventoryDragDropOperation* DragOp =
 		Cast<UAuraInventoryDragDropOperation>(InOperation);
 
-	if (!DragOp || !InteractionController)
-		return;
-
-	InteractionController->CancelItemMove();
+	if (DragOp && InteractionController &&
+		InteractionController->IsMovingItem()) {
+		InteractionController->CancelItemMove();
+	}
 
 	Super::NativeOnDragCancelled(
 		InDragDropEvent,
 		InOperation);
+}
+
+// This method is for handling cases where the item is dragged outside of the grid and dropped with mouse.
+bool UAuraInventoryGridWidget::HandleDropOutsideGrid()
+{
+	if (!InteractionController ||
+		!InteractionController->IsMovingItem()) {
+		return false;
+	}
+
+	InteractionController->CancelItemMove();
+
+	return true;
 }

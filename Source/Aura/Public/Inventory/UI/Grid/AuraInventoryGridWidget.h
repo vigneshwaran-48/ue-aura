@@ -34,6 +34,8 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
 
   void ClearControllerMoveVisual();
 
+  bool HandleDropOutsideGrid();
+
   UAuraInventoryInteractController* GetInteractionController() const
   {
       return InteractionController;
