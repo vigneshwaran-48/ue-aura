@@ -20,6 +20,8 @@ class AURA_API UAuraInventoryItemWidget : public UUserWidget {
   UPROPERTY()
   TObjectPtr<UAuraInventoryGridWidget> OwningGrid;
 
+  void SetSelected(bool bSelected);
+
  protected:
   virtual FReply NativeOnMouseButtonDown(
       const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
@@ -34,6 +36,9 @@ class AURA_API UAuraInventoryItemWidget : public UUserWidget {
 
   UPROPERTY(meta = (BindWidget))
   TObjectPtr<USizeBox> RootSizeBox;
+
+  UPROPERTY(meta = (BindWidgetOptional))
+  TObjectPtr<UWidget> SelectionHighlight;
 
  private:
   const FAuraItemInstance* CachedItem = nullptr;

@@ -67,9 +67,6 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
   UPROPERTY()
   UAuraInventoryGhostWidget* GhostWidget;
 
-  UPROPERTY(meta = (BindWidgetOptional))
-  UWidget* SelectionWidget;
-
   UPROPERTY()
   FIntPoint SelectedCell = FIntPoint::ZeroValue;
 
@@ -90,6 +87,12 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
 
   UPROPERTY()
   bool bUsingController = false;
+
+  UPROPERTY()
+  TMap<FIntPoint, TObjectPtr<UAuraInventorySlotWidget>> GridSlots;
+
+  UPROPERTY()
+  TMap<FAuraItemHandle, TObjectPtr<UAuraInventoryItemWidget>> ItemWidgets;
 
   void BuildGrid();
 
@@ -114,6 +117,10 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
   void SetControllerSelection(FIntPoint Cell);
 
   void UpdateControllerSelectionVisual();
+
+  FIntPoint FindNextSelectionCell(FIntPoint CurrentCell, FIntPoint Direction) const;
+
+  void CancelHeldItem();
 
   void SetGhostCell(
       FIntPoint Cell,

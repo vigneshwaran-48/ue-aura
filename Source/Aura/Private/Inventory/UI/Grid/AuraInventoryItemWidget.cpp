@@ -119,3 +119,25 @@ void UAuraInventoryItemWidget::NativeOnDragCancelled(
 
   OwningGrid->PopulateItems();
 }
+
+void UAuraInventoryItemWidget::SetSelected(bool bSelected) {
+    UE_LOG(
+        LogTemp,
+        Warning,
+        TEXT("ItemWidget %p SetSelected(%s) Highlight=%p Visibility=%d"),
+        this,
+        bSelected ? TEXT("true") : TEXT("false"),
+        SelectionHighlight.Get(),
+        SelectionHighlight
+        ? static_cast<int32>(SelectionHighlight->GetVisibility())
+        : -1);
+
+    if (!SelectionHighlight) {
+        return;
+    }
+
+    SelectionHighlight->SetVisibility(
+        bSelected
+        ? ESlateVisibility::HitTestInvisible
+        : ESlateVisibility::Collapsed);
+}

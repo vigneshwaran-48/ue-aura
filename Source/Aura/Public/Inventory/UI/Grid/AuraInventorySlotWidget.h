@@ -13,7 +13,12 @@ class AURA_API UAuraInventorySlotWidget : public UUserWidget {
  public:
   void SetSlotSize(float InSize);
 
+  void SetSelected(bool bSelected);
+
  protected:
   UPROPERTY(meta = (BindWidget))
   TObjectPtr<USizeBox> RootSizeBox;
+
+  UPROPERTY(meta = (BindWidgetOptional))
+  TObjectPtr<UWidget> SelectionHighlight;
 };

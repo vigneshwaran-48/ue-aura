@@ -17,14 +17,14 @@
 #include "Inventory/AuraItemHandle.h"
 
 void UAuraInventoryGridWidget::NativeConstruct() {
-	Super::NativeConstruct();
-
-	BuildGrid();
-	PopulateItems();
+	Super::NativeConstruct();	
 }
 
 void UAuraInventoryGridWidget::NativeOnActivated() {
 	Super::NativeOnActivated();
+
+	BuildGrid();
+	PopulateItems();
 
 	SetKeyboardFocus();
 
@@ -32,17 +32,18 @@ void UAuraInventoryGridWidget::NativeOnActivated() {
 }
 
 void UAuraInventoryGridWidget::NativeOnDeactivated() {
-	if (GhostWidget) {
-		GhostWidget->SetVisibility(ESlateVisibility::Collapsed);
-	}
+	CancelHeldItem();
 
-	bControllerHoldingItem = false;
 	bHasControllerSelection = false;
 
 	Super::NativeOnDeactivated();
 }
 
 void UAuraInventoryGridWidget::InitializeControllerSelection() {
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("[Selection] InitializeControllerSelection"));
 	UAuraInventoryComponent* Inventory = GetInventoryComponent();
 	if (!Inventory) {
 		return;
@@ -70,41 +71,168 @@ void UAuraInventoryGridWidget::InitializeControllerSelection() {
 	SetControllerSelection(FIntPoint::ZeroValue);
 }
 
-void UAuraInventoryGridWidget::SetControllerSelection(
-	FIntPoint Cell) {
+void UAuraInventoryGridWidget::SetControllerSelection(FIntPoint Cell) {
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("[Selection] SetControllerSelection (%d,%d)"),
+		Cell.X,
+		Cell.Y);
 	if (!IsValidCell(Cell)) {
 		return;
+	}
+
+	UAuraInventoryComponent* Inventory = GetInventoryComponent();
+	if (!Inventory) {
+		return;
+	}
+
+	UAuraGridInventoryLayout* Layout =
+		Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
+
+	if (!Layout) {
+		return;
+	}
+
+	if (bHasControllerSelection) {
+		FAuraItemHandle PreviousItemHandle;
+
+		if (Layout->GetItemAtCell(SelectedCell, PreviousItemHandle)) {
+			if (auto* PreviousItemWidget =
+				ItemWidgets.Find(PreviousItemHandle)) {
+
+				if (*PreviousItemWidget) {
+					(*PreviousItemWidget)->SetSelected(false);
+				}
+			}
+		}
+		else {
+			if (auto* PreviousSlot =
+				GridSlots.Find(SelectedCell)) {
+
+				if (*PreviousSlot) {
+					(*PreviousSlot)->SetSelected(false);
+				}
+			}
+		}
 	}
 
 	SelectedCell = Cell;
 	bHasControllerSelection = true;
 
-	UpdateControllerSelectionVisual();
+	// Select the item if this cell belongs to one.
+	FAuraItemHandle ItemHandle;
+
+	if (Layout->GetItemAtCell(SelectedCell, ItemHandle)) {
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("[Selection] Cell (%d,%d) contains item"),
+			SelectedCell.X,
+			SelectedCell.Y);
+
+		if (auto* ItemWidget = ItemWidgets.Find(ItemHandle)) {
+			UE_LOG(
+				LogTemp,
+				Warning,
+				TEXT("[Selection] ItemWidgets.Find -> %s"),
+				*ItemWidget
+				? TEXT("VALID")
+				: TEXT("NULL"));
+
+
+			if (*ItemWidget) {
+				(*ItemWidget)->SetSelected(true);
+			}
+		}
+		return;
+	}
+
+	if (auto* NewSlot = GridSlots.Find(SelectedCell)) {
+		if (*NewSlot) {
+			(*NewSlot)->SetSelected(true);
+		}
+	}
 }
 
-void UAuraInventoryGridWidget::MoveSelection(
-	FIntPoint Direction) {
-
+void UAuraInventoryGridWidget::MoveSelection(FIntPoint Direction) {
 	if (!bHasControllerSelection) {
 		InitializeControllerSelection();
 		return;
 	}
 
-	FIntPoint NewCell =
-		SelectedCell + Direction;
+	const FIntPoint NewCell =
+		FindNextSelectionCell(SelectedCell, Direction);
 
 	if (!IsValidCell(NewCell)) {
 		return;
 	}
 
-	SelectedCell = NewCell;
-
 	if (bControllerHoldingItem) {
+		SelectedCell = NewCell;
 		SetGhostCell(SelectedCell);
 	}
 	else {
-		UpdateControllerSelectionVisual();
+		SetControllerSelection(NewCell);
 	}
+}
+
+FIntPoint UAuraInventoryGridWidget::FindNextSelectionCell(
+	FIntPoint CurrentCell,
+	FIntPoint Direction) const {
+
+	UAuraInventoryComponent* Inventory = GetInventoryComponent();
+	if (!Inventory) {
+		return CurrentCell;
+	}
+
+	UAuraGridInventoryLayout* Layout =
+		Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
+
+	if (!Layout) {
+		return CurrentCell;
+	}
+
+	FAuraItemHandle CurrentItem;
+
+	if (!Layout->GetItemAtCell(CurrentCell, CurrentItem)) {
+		return CurrentCell + Direction;
+	}
+
+	FIntPoint ItemPosition;
+	if (!Layout->GetItemPosition(CurrentItem, ItemPosition)) {
+		return CurrentCell + Direction;
+	}
+
+	const FIntPoint ItemSize =
+		Layout->GetItemSize(CurrentItem);
+
+	const int32 MinX = ItemPosition.X;
+	const int32 MaxX = ItemPosition.X + ItemSize.X - 1;
+
+	const int32 MinY = ItemPosition.Y;
+	const int32 MaxY = ItemPosition.Y + ItemSize.Y - 1;
+
+	FIntPoint NewCell = CurrentCell;
+
+	if (Direction.Y < 0) {
+		// Moving up: leave the item through its top edge.
+		NewCell.Y = MinY - 1;
+	}
+	else if (Direction.Y > 0) {
+		// Moving down: leave the item through its bottom edge.
+		NewCell.Y = MaxY + 1;
+	}
+	else if (Direction.X < 0) {
+		// Moving left: leave the item through its left edge.
+		NewCell.X = MinX - 1;
+	}
+	else if (Direction.X > 0) {
+		// Moving right: leave the item through its right edge.
+		NewCell.X = MaxX + 1;
+	}
+
+	return NewCell;
 }
 
 // For now handling direct controller input, but it should be changed through the CommonUI.
@@ -253,6 +381,17 @@ void UAuraInventoryGridWidget::HandleControllerCancel() {
 		return;
 	}
 
+	CancelHeldItem();
+	PopulateItems();
+
+	SetControllerSelection(SelectedCell);
+}
+
+void UAuraInventoryGridWidget::CancelHeldItem() {
+	if (!bControllerHoldingItem) {
+		return;
+	}
+
 	UAuraInventoryComponent* Inventory = GetInventoryComponent();
 	if (!Inventory) {
 		return;
@@ -270,16 +409,12 @@ void UAuraInventoryGridWidget::HandleControllerCancel() {
 		HeldItemOriginalPosition);
 
 	bControllerHoldingItem = false;
-
 	HeldItemHandle = FAuraItemHandle();
 	HeldItemSize = FIntPoint(1, 1);
 
 	if (GhostWidget) {
-		GhostWidget->SetVisibility(
-			ESlateVisibility::Collapsed);
+		GhostWidget->SetVisibility(ESlateVisibility::Collapsed);
 	}
-
-	PopulateItems();
 }
 
 void UAuraInventoryGridWidget::SetGhostCell(
@@ -354,50 +489,6 @@ void UAuraInventoryGridWidget::SetGhostCell(
 		: ESlateVisibility::Collapsed);
 }
 
-void UAuraInventoryGridWidget::UpdateControllerSelectionVisual() {
-	if (!SelectionWidget) {
-		return;
-	}
-
-	UAuraInventoryComponent* Inventory =
-		GetInventoryComponent();
-
-	if (!Inventory) {
-		return;
-	}
-
-	UAuraGridInventoryLayout* Layout =
-		Cast<UAuraGridInventoryLayout>(
-			Inventory->GetLayout());
-
-	if (!Layout) {
-		return;
-	}
-
-	const float CellSize =
-		Layout->GetCellSize();
-
-	UCanvasPanelSlot* SelectionCanvasSlot =
-		Cast<UCanvasPanelSlot>(SelectionWidget->Slot);
-
-	if (!SelectionCanvasSlot) {
-		return;
-	}
-
-	SelectionCanvasSlot->SetPosition(
-		FVector2D(
-			SelectedCell.X * CellSize,
-			SelectedCell.Y * CellSize));
-
-	SelectionCanvasSlot->SetSize(
-		FVector2D(
-			CellSize,
-			CellSize));
-
-	SelectionWidget->SetVisibility(
-		ESlateVisibility::HitTestInvisible);
-}
-
 bool UAuraInventoryGridWidget::IsValidCell(FIntPoint Cell) const {
 	UAuraInventoryComponent* Inventory = GetInventoryComponent();
 	if (!Inventory) {
@@ -457,6 +548,8 @@ void UAuraInventoryGridWidget::BuildGrid() {
 		GridSizeBox->SetHeightOverride(Rows * CellSize);
 	}
 
+	GridSlots.Empty();
+
 	for (int32 Row = 0; Row < Rows; ++Row) {
 		for (int32 Col = 0; Col < Cols; ++Col) {
 			UAuraInventorySlotWidget* NewSlot =
@@ -475,6 +568,10 @@ void UAuraInventoryGridWidget::BuildGrid() {
 				GridSlot->SetHorizontalAlignment(HAlign_Fill);
 				GridSlot->SetVerticalAlignment(VAlign_Fill);
 			}
+
+			GridSlots.Add(
+				FIntPoint(Col, Row),
+				NewSlot);
 		}
 	}
 
@@ -493,6 +590,8 @@ void UAuraInventoryGridWidget::PopulateItems() {
 			Child->RemoveFromParent();
 		}
 	}
+
+	ItemWidgets.Empty();
 
 	UAuraInventoryComponent* Inventory = GetInventoryComponent();
 	if (!Inventory) {
@@ -546,6 +645,8 @@ void UAuraInventoryGridWidget::PopulateItems() {
 			FVector2D(Position.X * CellSize, Position.Y * CellSize));
 
 		CanvasSlot->SetSize(FVector2D(Size.X * CellSize, Size.Y * CellSize));
+
+		ItemWidgets.Add(Handle, ItemWidget);
 	}
 }
 
