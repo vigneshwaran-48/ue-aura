@@ -1,12 +1,11 @@
 #include "Inventory/UI/Grid/AuraInventoryItemWidget.h"
 
 #include "Blueprint/WidgetBlueprintLibrary.h"
-#include "Inventory/AuraInventoryComponent.h"
 #include "Inventory/AuraItemInstance.h"
 #include "Inventory/Fragments/AuraItemFragment_Size.h"
-#include "Inventory/Layouts/AuraGridInventoryLayout.h"
 #include "Inventory/UI/Grid/AuraInventoryDragDropOperation.h"
 #include "Inventory/UI/Grid/AuraInventoryGridWidget.h"
+#include "Inventory/UI/Grid/AuraInventoryInteractController.h"
 
 void UAuraInventoryItemWidget::InitFromItem(const FAuraItemInstance& Item,
                                             FAuraItemHandle InHandle,
@@ -39,85 +38,41 @@ FReply UAuraInventoryItemWidget::NativeOnMouseButtonDown(
 }
 
 void UAuraInventoryItemWidget::NativeOnDragDetected(
-    const FGeometry& InGeometry, const FPointerEvent& InMouseEvent,
-    UDragDropOperation*& OutOperation) {
-  UAuraInventoryDragDropOperation* DragOp =
-      NewObject<UAuraInventoryDragDropOperation>();
+    const FGeometry& InGeometry,
+    const FPointerEvent& InMouseEvent,
+    UDragDropOperation*& OutOperation)
+{
+    if (!OwningGrid)
+        return;
 
-  FVector2D LocalMousePos =
-      InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
+    UAuraInventoryInteractController* Controller =
+        OwningGrid->GetInteractionController();
 
-  DragOp->DragOffset = LocalMousePos;
-  DragOp->ItemHandle = ItemHandle;
-  DragOp->ItemSize = ItemSize;
-  DragOp->SourceWidget = this;
+    if (!Controller)
+        return;
 
-  APawn* Pawn = GetOwningPlayerPawn();
-  UAuraInventoryComponent* Inventory =
-      Pawn ? Pawn->FindComponentByClass<UAuraInventoryComponent>() : nullptr;
+    if (!Controller->BeginItemMove(ItemHandle))
+        return;
 
-  if (Inventory) {
-    UAuraGridInventoryLayout* Layout =
-        Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
+    UAuraInventoryDragDropOperation* DragOp =
+        NewObject<UAuraInventoryDragDropOperation>();
 
-    if (Layout) {
-      FIntPoint Pos;
-      if (Layout->GetItemPosition(ItemHandle, Pos)) {
-        DragOp->OriginalPosition = Pos;
-      }
-
-      Layout->RemoveItem(ItemHandle);
+    if (!DragOp) {
+        Controller->CancelItemMove();
+        return;
     }
-  }
 
-  UAuraInventoryItemWidget* DragVisual =
-      CreateWidget<UAuraInventoryItemWidget>(this, GetClass());
+    const FVector2D LocalMousePos =
+        InGeometry.AbsoluteToLocal(
+            InMouseEvent.GetScreenSpacePosition());
 
-  if (DragVisual) {
-    DragVisual->InitFromItem(*CachedItem, ItemHandle, CellSize);
-    DragOp->DefaultDragVisual = DragVisual;
-  }
+    DragOp->ItemHandle = ItemHandle;
+    DragOp->DragOffset = LocalMousePos;
+    DragOp->InteractionController = Controller;
 
-  SetVisibility(ESlateVisibility::Hidden);
+    // Create drag visual here for now.
 
-  OutOperation = DragOp;
-}
-
-void UAuraInventoryItemWidget::NativeOnDragCancelled(
-    const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) {
-  UE_LOG(LogTemp, Warning, TEXT("[DragCancelled] Called"));
-
-  UAuraInventoryDragDropOperation* DragOp =
-      Cast<UAuraInventoryDragDropOperation>(InOperation);
-
-  if (!DragOp || !OwningGrid) {
-    return;
-  }
-
-  APawn* Pawn = GetOwningPlayerPawn();
-  if (!Pawn) {
-    return;
-  }
-
-  UAuraInventoryComponent* Inventory =
-      Pawn->FindComponentByClass<UAuraInventoryComponent>();
-
-  if (!Inventory) {
-    return;
-  }
-
-  UAuraGridInventoryLayout* Layout =
-      Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
-
-  if (!Layout) {
-    return;
-  }
-
-  Layout->TryAddItemAt(DragOp->ItemHandle, DragOp->OriginalPosition);
-
-  SetVisibility(ESlateVisibility::Visible);
-
-  OwningGrid->PopulateItems();
+    OutOperation = DragOp;
 }
 
 void UAuraInventoryItemWidget::SetSelected(bool bSelected) {

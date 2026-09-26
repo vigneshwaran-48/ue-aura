@@ -15,6 +15,7 @@ class UAuraInventoryComponent;
 class UAuraInventoryItemWidget;
 class UAuraInventoryDragDropOperation;
 class UAuraInventoryGhostWidget;
+class UAuraInventoryInteractController;
 
 UCLASS()
 class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
@@ -24,6 +25,19 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
   virtual void NativeConstruct() override;
 
   void PopulateItems();
+
+  UAuraInventoryComponent* GetInventoryComponent() const;
+
+  void UpdateControllerSelectionVisual();
+
+  void UpdateControllerMoveVisual();
+
+  void ClearControllerMoveVisual();
+
+  UAuraInventoryInteractController* GetInteractionController() const
+  {
+      return InteractionController;
+  }
 
  protected:
   UPROPERTY(meta = (BindWidget))
@@ -55,6 +69,9 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
   virtual void NativeOnDragLeave(const FDragDropEvent& InDragDropEvent,
                                  UDragDropOperation* InOperation) override;
 
+  virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent,
+      UDragDropOperation* InOperation) override;
+
   virtual void NativeOnActivated() override;
 
   virtual void NativeOnDeactivated() override;
@@ -68,24 +85,6 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
   UAuraInventoryGhostWidget* GhostWidget;
 
   UPROPERTY()
-  FIntPoint SelectedCell = FIntPoint::ZeroValue;
-
-  UPROPERTY()
-  bool bHasControllerSelection = false;
-
-  UPROPERTY()
-  bool bControllerHoldingItem = false;
-
-  UPROPERTY()
-  FAuraItemHandle HeldItemHandle;
-
-  UPROPERTY()
-  FIntPoint HeldItemOriginalPosition = FIntPoint::ZeroValue;
-
-  UPROPERTY()
-  FIntPoint HeldItemSize = FIntPoint(1, 1);
-
-  UPROPERTY()
   bool bUsingController = false;
 
   UPROPERTY()
@@ -94,37 +93,13 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
   UPROPERTY()
   TMap<FAuraItemHandle, TObjectPtr<UAuraInventoryItemWidget>> ItemWidgets;
 
+  UPROPERTY()
+  TObjectPtr<UAuraInventoryInteractController> InteractionController;
+
   void BuildGrid();
-
-  UAuraInventoryComponent* GetInventoryComponent() const;
-
-  void UpdateGhostPreview(const FGeometry& InGeometry,
-                          const FDragDropEvent& InDragDropEvent,
-                          class UAuraInventoryDragDropOperation* DragOp);
-
-  void InitializeControllerSelection();
-
-  void MoveSelection(FIntPoint Direction);
-
-  void HandleControllerConfirm();
-
-  void HandleControllerCancel();
-
-  bool PickUpSelectedItem();
-
-  bool PlaceHeldItem();
-
-  void SetControllerSelection(FIntPoint Cell);
-
-  void UpdateControllerSelectionVisual();
-
-  FIntPoint FindNextSelectionCell(FIntPoint CurrentCell, FIntPoint Direction) const;
-
-  void CancelHeldItem();
 
   void SetGhostCell(
       FIntPoint Cell,
       bool bShowGhost = true);
 
-  bool IsValidCell(FIntPoint Cell) const;
 };

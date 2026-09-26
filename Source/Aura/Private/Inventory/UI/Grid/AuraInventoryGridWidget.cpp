@@ -15,12 +15,14 @@
 #include "Inventory/UI/Grid/AuraInventoryItemWidget.h"
 #include "Inventory/UI/Grid/AuraInventorySlotWidget.h"
 #include "Inventory/AuraItemHandle.h"
+#include "Inventory/UI/Grid/AuraInventoryInteractController.h"
 
 void UAuraInventoryGridWidget::NativeConstruct() {
-	Super::NativeConstruct();	
+	Super::NativeConstruct();
 }
 
-void UAuraInventoryGridWidget::NativeOnActivated() {
+void UAuraInventoryGridWidget::NativeOnActivated()
+{
 	Super::NativeOnActivated();
 
 	BuildGrid();
@@ -28,403 +30,174 @@ void UAuraInventoryGridWidget::NativeOnActivated() {
 
 	SetKeyboardFocus();
 
-	InitializeControllerSelection();
+	if (!InteractionController) {
+		InteractionController =
+			NewObject<UAuraInventoryInteractController>(this);
+	}
+
+	InteractionController->Initialize(this);
+	InteractionController->InitializeSelection();
 }
 
-void UAuraInventoryGridWidget::NativeOnDeactivated() {
-	CancelHeldItem();
-
-	bHasControllerSelection = false;
+void UAuraInventoryGridWidget::NativeOnDeactivated()
+{
+	if (InteractionController) {
+		InteractionController->CancelItemMove();
+		InteractionController->ClearSelection();
+	}
 
 	Super::NativeOnDeactivated();
 }
 
-void UAuraInventoryGridWidget::InitializeControllerSelection() {
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("[Selection] InitializeControllerSelection"));
-	UAuraInventoryComponent* Inventory = GetInventoryComponent();
+void UAuraInventoryGridWidget::UpdateControllerSelectionVisual()
+{
+	for (const auto& Pair : GridSlots) {
+		if (Pair.Value) {
+			Pair.Value->SetSelected(false);
+		}
+	}
+
+	for (const auto& Pair : ItemWidgets) {
+		if (Pair.Value) {
+			Pair.Value->SetSelected(false);
+		}
+	}
+
+	if (!InteractionController ||
+		!InteractionController->HasSelection() ||
+		InteractionController->IsMovingItem()) {
+		return;
+	}
+
+	UAuraInventoryComponent* Inventory =
+		GetInventoryComponent();
+
 	if (!Inventory) {
 		return;
 	}
 
 	UAuraGridInventoryLayout* Layout =
-		Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
+		Cast<UAuraGridInventoryLayout>(
+			Inventory->GetLayout());
 
 	if (!Layout) {
 		return;
 	}
 
-	TArray<FAuraItemHandle> Handles;
-	Layout->GetAllItems(Handles);
+	const FIntPoint SelectedCell =
+		InteractionController->GetSelectedCell();
 
-	if (Handles.Num() > 0) {
-		FIntPoint Position;
+	FAuraItemHandle Handle;
 
-		if (Layout->GetItemPosition(Handles[0], Position)) {
-			SetControllerSelection(Position);
-			return;
-		}
-	}
-
-	SetControllerSelection(FIntPoint::ZeroValue);
-}
-
-void UAuraInventoryGridWidget::SetControllerSelection(FIntPoint Cell) {
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("[Selection] SetControllerSelection (%d,%d)"),
-		Cell.X,
-		Cell.Y);
-	if (!IsValidCell(Cell)) {
-		return;
-	}
-
-	UAuraInventoryComponent* Inventory = GetInventoryComponent();
-	if (!Inventory) {
-		return;
-	}
-
-	UAuraGridInventoryLayout* Layout =
-		Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
-
-	if (!Layout) {
-		return;
-	}
-
-	if (bHasControllerSelection) {
-		FAuraItemHandle PreviousItemHandle;
-
-		if (Layout->GetItemAtCell(SelectedCell, PreviousItemHandle)) {
-			if (auto* PreviousItemWidget =
-				ItemWidgets.Find(PreviousItemHandle)) {
-
-				if (*PreviousItemWidget) {
-					(*PreviousItemWidget)->SetSelected(false);
-				}
-			}
-		}
-		else {
-			if (auto* PreviousSlot =
-				GridSlots.Find(SelectedCell)) {
-
-				if (*PreviousSlot) {
-					(*PreviousSlot)->SetSelected(false);
-				}
-			}
-		}
-	}
-
-	SelectedCell = Cell;
-	bHasControllerSelection = true;
-
-	// Select the item if this cell belongs to one.
-	FAuraItemHandle ItemHandle;
-
-	if (Layout->GetItemAtCell(SelectedCell, ItemHandle)) {
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("[Selection] Cell (%d,%d) contains item"),
-			SelectedCell.X,
-			SelectedCell.Y);
-
-		if (auto* ItemWidget = ItemWidgets.Find(ItemHandle)) {
-			UE_LOG(
-				LogTemp,
-				Warning,
-				TEXT("[Selection] ItemWidgets.Find -> %s"),
-				*ItemWidget
-				? TEXT("VALID")
-				: TEXT("NULL"));
-
-
+	if (Layout->GetItemAtCell(SelectedCell, Handle)) {
+		if (TObjectPtr<UAuraInventoryItemWidget>* ItemWidget =
+			ItemWidgets.Find(Handle)) {
 			if (*ItemWidget) {
 				(*ItemWidget)->SetSelected(true);
 			}
 		}
+
 		return;
 	}
 
-	if (auto* NewSlot = GridSlots.Find(SelectedCell)) {
-		if (*NewSlot) {
-			(*NewSlot)->SetSelected(true);
+	if (TObjectPtr<UAuraInventorySlotWidget>* SlotWidget =
+		GridSlots.Find(SelectedCell)) {
+		if (*SlotWidget) {
+			(*SlotWidget)->SetSelected(true);
 		}
 	}
 }
 
-void UAuraInventoryGridWidget::MoveSelection(FIntPoint Direction) {
-	if (!bHasControllerSelection) {
-		InitializeControllerSelection();
+void UAuraInventoryGridWidget::UpdateControllerMoveVisual()
+{
+	if (!InteractionController ||
+		!InteractionController->IsMovingItem()) {
 		return;
 	}
 
-	const FIntPoint NewCell =
-		FindNextSelectionCell(SelectedCell, Direction);
-
-	if (!IsValidCell(NewCell)) {
-		return;
-	}
-
-	if (bControllerHoldingItem) {
-		SelectedCell = NewCell;
-		SetGhostCell(SelectedCell);
-	}
-	else {
-		SetControllerSelection(NewCell);
-	}
-}
-
-FIntPoint UAuraInventoryGridWidget::FindNextSelectionCell(
-	FIntPoint CurrentCell,
-	FIntPoint Direction) const {
-
-	UAuraInventoryComponent* Inventory = GetInventoryComponent();
-	if (!Inventory) {
-		return CurrentCell;
-	}
-
-	UAuraGridInventoryLayout* Layout =
-		Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
-
-	if (!Layout) {
-		return CurrentCell;
-	}
-
-	FAuraItemHandle CurrentItem;
-
-	if (!Layout->GetItemAtCell(CurrentCell, CurrentItem)) {
-		return CurrentCell + Direction;
-	}
-
-	FIntPoint ItemPosition;
-	if (!Layout->GetItemPosition(CurrentItem, ItemPosition)) {
-		return CurrentCell + Direction;
-	}
-
-	const FIntPoint ItemSize =
-		Layout->GetItemSize(CurrentItem);
-
-	const int32 MinX = ItemPosition.X;
-	const int32 MaxX = ItemPosition.X + ItemSize.X - 1;
-
-	const int32 MinY = ItemPosition.Y;
-	const int32 MaxY = ItemPosition.Y + ItemSize.Y - 1;
-
-	FIntPoint NewCell = CurrentCell;
-
-	if (Direction.Y < 0) {
-		// Moving up: leave the item through its top edge.
-		NewCell.Y = MinY - 1;
-	}
-	else if (Direction.Y > 0) {
-		// Moving down: leave the item through its bottom edge.
-		NewCell.Y = MaxY + 1;
-	}
-	else if (Direction.X < 0) {
-		// Moving left: leave the item through its left edge.
-		NewCell.X = MinX - 1;
-	}
-	else if (Direction.X > 0) {
-		// Moving right: leave the item through its right edge.
-		NewCell.X = MaxX + 1;
-	}
-
-	return NewCell;
+	SetGhostCell(
+		InteractionController->GetMoveState().CurrentPosition);
 }
 
 // For now handling direct controller input, but it should be changed through the CommonUI.
 FReply UAuraInventoryGridWidget::NativeOnKeyDown(
 	const FGeometry& InGeometry,
-	const FKeyEvent& InKeyEvent) {
+	const FKeyEvent& InKeyEvent)
+{
+	if (!InteractionController) {
+		return Super::NativeOnKeyDown(
+			InGeometry,
+			InKeyEvent);
+	}
 
 	const FKey Key = InKeyEvent.GetKey();
 
-	if (Key == EKeys::Gamepad_DPad_Up) {
-		MoveSelection(FIntPoint(0, -1));
+	if (Key == EKeys::Up || Key == EKeys::Gamepad_DPad_Up)
+	{
+		InteractionController->MoveSelection(
+			FIntPoint(0, -1));
+
 		return FReply::Handled();
 	}
 
-	if (Key == EKeys::Gamepad_DPad_Down) {
-		MoveSelection(FIntPoint(0, 1));
+	if (Key == EKeys::Down || Key == EKeys::Gamepad_DPad_Down)
+	{
+		InteractionController->MoveSelection(
+			FIntPoint(0, 1));
+
 		return FReply::Handled();
 	}
 
-	if (Key == EKeys::Gamepad_DPad_Left) {
-		MoveSelection(FIntPoint(-1, 0));
+	if (Key == EKeys::Left || Key == EKeys::Gamepad_DPad_Left)
+	{
+		InteractionController->MoveSelection(
+			FIntPoint(-1, 0));
+
 		return FReply::Handled();
 	}
 
-	if (Key == EKeys::Gamepad_DPad_Right) {
-		MoveSelection(FIntPoint(1, 0));
+	if (Key == EKeys::Right || Key == EKeys::Gamepad_DPad_Right)
+	{
+		InteractionController->MoveSelection(
+			FIntPoint(1, 0));
+
 		return FReply::Handled();
 	}
 
 	// FaceButton_Bottom won't work here because it will be consumed by the CommonUI.
-	if (Key == EKeys::Gamepad_FaceButton_Top) {
-		HandleControllerConfirm();
+	if (Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Top)
+	{
+		InteractionController->HandleConfirm();
 		return FReply::Handled();
 	}
 
-	if (Key == EKeys::Gamepad_FaceButton_Right) {
-		HandleControllerCancel();
+	if (Key == EKeys::Escape || Key == EKeys::Gamepad_FaceButton_Right)
+	{
+		InteractionController->HandleCancel();
 		return FReply::Handled();
 	}
 
-	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+	return Super::NativeOnKeyDown(
+		InGeometry,
+		InKeyEvent);
 }
 
-void UAuraInventoryGridWidget::HandleControllerConfirm() {
-	if (bControllerHoldingItem) {
-		PlaceHeldItem();
-		return;
-	}
-
-	PickUpSelectedItem();
-}
-
-bool UAuraInventoryGridWidget::PickUpSelectedItem() {
-	UAuraInventoryComponent* Inventory = GetInventoryComponent();
-	if (!Inventory) {
-		return false;
-	}
-
-	UAuraGridInventoryLayout* Layout =
-		Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
-
-	if (!Layout) {
-		return false;
-	}
-
-	FAuraItemHandle Handle;
-
-	if (!Layout->GetItemAtCell(SelectedCell, Handle)) {
-		return false;
-	}
-
-	const FAuraItemInstance* Item = Inventory->FindItem(Handle);
-	if (!Item) {
-		return false;
-	}
-
-	FIntPoint Position;
-
-	if (!Layout->GetItemPosition(Handle, Position)) {
-		return false;
-	}
-
-	HeldItemOriginalPosition = Position;
-	HeldItemSize = Layout->GetItemSize(Handle);
-	HeldItemHandle = Handle;
-
-	// Remove it from the spatial layout temporarily.
-	Layout->RemoveItem(Handle);
-
-	bControllerHoldingItem = true;
-
-	// Rebuild the item widgets without the held item.
-	PopulateItems();
-
-	SetGhostCell(SelectedCell);
-
-	return true;
-}
-
-bool UAuraInventoryGridWidget::PlaceHeldItem() {
-	if (!bControllerHoldingItem) {
-		return false;
-	}
-
-	UAuraInventoryComponent* Inventory = GetInventoryComponent();
-	if (!Inventory) {
-		return false;
-	}
-
-	UAuraGridInventoryLayout* Layout =
-		Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
-
-	if (!Layout) {
-		return false;
-	}
-
-	if (!Layout->CanPlaceItemAt(
-		SelectedCell,
-		HeldItemSize)) {
-		return false;
-	}
-
-	if (!Layout->TryAddItemAt(
-		HeldItemHandle,
-		SelectedCell)) {
-		return false;
-	}
-
-	bControllerHoldingItem = false;
-
-	HeldItemHandle = FAuraItemHandle();
-	HeldItemSize = FIntPoint(1, 1);
-
+void UAuraInventoryGridWidget::ClearControllerMoveVisual()
+{
 	if (GhostWidget) {
 		GhostWidget->SetVisibility(
 			ESlateVisibility::Collapsed);
-	}
-
-	PopulateItems();
-
-	return true;
-}
-
-void UAuraInventoryGridWidget::HandleControllerCancel() {
-	if (!bControllerHoldingItem) {
-		return;
-	}
-
-	CancelHeldItem();
-	PopulateItems();
-
-	SetControllerSelection(SelectedCell);
-}
-
-void UAuraInventoryGridWidget::CancelHeldItem() {
-	if (!bControllerHoldingItem) {
-		return;
-	}
-
-	UAuraInventoryComponent* Inventory = GetInventoryComponent();
-	if (!Inventory) {
-		return;
-	}
-
-	UAuraGridInventoryLayout* Layout =
-		Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
-
-	if (!Layout) {
-		return;
-	}
-
-	Layout->TryAddItemAt(
-		HeldItemHandle,
-		HeldItemOriginalPosition);
-
-	bControllerHoldingItem = false;
-	HeldItemHandle = FAuraItemHandle();
-	HeldItemSize = FIntPoint(1, 1);
-
-	if (GhostWidget) {
-		GhostWidget->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }
 
 void UAuraInventoryGridWidget::SetGhostCell(
 	FIntPoint Cell,
-	bool bShowGhost) {
-
+	bool bShowGhost)
+{
 	UAuraInventoryComponent* Inventory =
 		GetInventoryComponent();
 
-	if (!Inventory || !GhostWidgetClass) {
+	if (!Inventory || !GhostWidgetClass || !InteractionController) {
 		return;
 	}
 
@@ -456,6 +229,9 @@ void UAuraInventoryGridWidget::SetGhostCell(
 
 	const float CellSize = Layout->GetCellSize();
 
+	const FIntPoint ItemSize =
+		InteractionController->GetMoveState().ItemSize;
+
 	UCanvasPanelSlot* CanvasSlot =
 		Cast<UCanvasPanelSlot>(GhostWidget->Slot);
 
@@ -470,13 +246,11 @@ void UAuraInventoryGridWidget::SetGhostCell(
 
 	CanvasSlot->SetSize(
 		FVector2D(
-			HeldItemSize.X * CellSize,
-			HeldItemSize.Y * CellSize));
+			ItemSize.X * CellSize,
+			ItemSize.Y * CellSize));
 
 	const bool bCanPlace =
-		Layout->CanPlaceItemAt(
-			Cell,
-			HeldItemSize);
+		InteractionController->CanPlaceAt(Cell);
 
 	GhostWidget->SetGhostState(
 		bCanPlace
@@ -487,25 +261,6 @@ void UAuraInventoryGridWidget::SetGhostCell(
 		bShowGhost
 		? ESlateVisibility::HitTestInvisible
 		: ESlateVisibility::Collapsed);
-}
-
-bool UAuraInventoryGridWidget::IsValidCell(FIntPoint Cell) const {
-	UAuraInventoryComponent* Inventory = GetInventoryComponent();
-	if (!Inventory) {
-		return false;
-	}
-
-	UAuraGridInventoryLayout* Layout =
-		Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
-
-	if (!Layout) {
-		return false;
-	}
-
-	return Cell.X >= 0 &&
-		Cell.Y >= 0 &&
-		Cell.X < Layout->GetColumns() &&
-		Cell.Y < Layout->GetRows();
 }
 
 UAuraInventoryComponent* UAuraInventoryGridWidget::GetInventoryComponent()
@@ -651,110 +406,111 @@ void UAuraInventoryGridWidget::PopulateItems() {
 }
 
 bool UAuraInventoryGridWidget::NativeOnDrop(
-	const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-	UDragDropOperation* InOperation) {
+	const FGeometry& InGeometry,
+	const FDragDropEvent& InDragDropEvent,
+	UDragDropOperation* InOperation)
+{
 	UAuraInventoryDragDropOperation* DragOp =
 		Cast<UAuraInventoryDragDropOperation>(InOperation);
-	if (!DragOp) return false;
 
-	UAuraInventoryComponent* Inventory = GetInventoryComponent();
-	UAuraGridInventoryLayout* Layout =
-		Inventory ? Cast<UAuraGridInventoryLayout>(Inventory->GetLayout())
-		: nullptr;
-
-	if (Layout && GhostWidget &&
-		GhostWidget->GetVisibility() != ESlateVisibility::Collapsed) {
-		UCanvasPanelSlot* GhostSlot = Cast<UCanvasPanelSlot>(GhostWidget->Slot);
-		if (GhostSlot) {
-			FVector2D GhostPos = GhostSlot->GetPosition();
-			const float CellSize = Layout->GetCellSize();
-
-			FIntPoint DropCell(FMath::RoundToInt(GhostPos.X / CellSize),
-				FMath::RoundToInt(GhostPos.Y / CellSize));
-
-			bool bPlaced = Layout->TryAddItemAt(DragOp->ItemHandle, DropCell);
-
-			if (!bPlaced) {
-				Layout->TryAddItemAt(DragOp->ItemHandle, DragOp->OriginalPosition);
-
-				if (DragOp->SourceWidget) {
-					DragOp->SourceWidget->SetVisibility(ESlateVisibility::Visible);
-				}
-			}
-			else {
-				if (DragOp->SourceWidget) {
-					DragOp->SourceWidget->RemoveFromParent();
-				}
-			}
-		}
+	if (!DragOp || !InteractionController ||
+		!InteractionController->IsMovingItem()) {
+		return false;
 	}
 
-	if (GhostWidget) {
-		GhostWidget->SetVisibility(ESlateVisibility::Collapsed);
+	if (InteractionController->CanPlaceAt(
+		InteractionController->GetMoveState().CurrentPosition)) {
+		return InteractionController->CommitItemMove();
 	}
 
-	PopulateItems();
+	InteractionController->CancelItemMove();
 	return true;
 }
 
 bool UAuraInventoryGridWidget::NativeOnDragOver(
-	const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-	UDragDropOperation* InOperation) {
-	Super::NativeOnDragOver(InGeometry, InDragDropEvent, InOperation);
+	const FGeometry& InGeometry,
+	const FDragDropEvent& InDragDropEvent,
+	UDragDropOperation* InOperation)
+{
+	UAuraInventoryDragDropOperation* DragOp =
+		Cast<UAuraInventoryDragDropOperation>(InOperation);
 
-	if (UAuraInventoryDragDropOperation* DragOp =
-		Cast<UAuraInventoryDragDropOperation>(InOperation)) {
-		UpdateGhostPreview(InGeometry, InDragDropEvent, DragOp);
-		return true;
+	if (!DragOp || !InteractionController ||
+		!InteractionController->IsMovingItem()) {
+		return false;
 	}
-	return false;
+
+	UAuraInventoryComponent* Inventory =
+		GetInventoryComponent();
+
+	if (!Inventory) {
+		return false;
+	}
+
+	UAuraGridInventoryLayout* Layout =
+		Cast<UAuraGridInventoryLayout>(
+			Inventory->GetLayout());
+
+	if (!Layout) {
+		return false;
+	}
+
+	const float CellSize =
+		Layout->GetCellSize();
+
+	const FVector2D LocalMousePosition =
+		InGeometry.AbsoluteToLocal(
+			InDragDropEvent.GetScreenSpacePosition());
+
+	const FVector2D ItemTopLeft =
+		LocalMousePosition - DragOp->DragOffset;
+
+	const FIntPoint ItemSize =
+		InteractionController->GetMoveState().ItemSize;
+
+	const int32 MaxX =
+		Layout->GetColumns() - ItemSize.X;
+
+	const int32 MaxY =
+		Layout->GetRows() - ItemSize.Y;
+
+	const FIntPoint Cell(
+		FMath::Clamp(
+			FMath::RoundToInt(ItemTopLeft.X / CellSize),
+			0,
+			MaxX),
+		FMath::Clamp(
+			FMath::RoundToInt(ItemTopLeft.Y / CellSize),
+			0,
+			MaxY));
+
+	InteractionController->UpdateItemMove(Cell);
+
+	return true;
 }
 
 void UAuraInventoryGridWidget::NativeOnDragLeave(
-	const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) {
-	Super::NativeOnDragLeave(InDragDropEvent, InOperation);
-
-	if (GhostWidget) {
-		GhostWidget->SetVisibility(ESlateVisibility::Collapsed);
-	}
+	const FDragDropEvent& InDragDropEvent,
+	UDragDropOperation* InOperation)
+{
+	Super::NativeOnDragLeave(
+		InDragDropEvent,
+		InOperation);
 }
 
-void UAuraInventoryGridWidget::UpdateGhostPreview(
-	const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-	UAuraInventoryDragDropOperation* DragOp) {
-	UAuraInventoryComponent* Inventory = GetInventoryComponent();
-	if (!Inventory || !ItemCanvas || !GhostWidgetClass) return;
+void UAuraInventoryGridWidget::NativeOnDragCancelled(
+	const FDragDropEvent& InDragDropEvent,
+	UDragDropOperation* InOperation)
+{
+	UAuraInventoryDragDropOperation* DragOp =
+		Cast<UAuraInventoryDragDropOperation>(InOperation);
 
-	UAuraGridInventoryLayout* Layout =
-		Cast<UAuraGridInventoryLayout>(Inventory->GetLayout());
-	if (!Layout) return;
+	if (!DragOp || !InteractionController)
+		return;
 
-	if (!GhostWidget) {
-		GhostWidget =
-			CreateWidget<UAuraInventoryGhostWidget>(this, GhostWidgetClass);
-		UCanvasPanelSlot* GhostSlot = ItemCanvas->AddChildToCanvas(GhostWidget);
-		GhostSlot->SetZOrder(-1);  // Keep it behind the actual items
-	}
+	InteractionController->CancelItemMove();
 
-	const float CellSize = Layout->GetCellSize();
-	FVector2D LocalPos =
-		InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
-
-	FVector2D ItemTopLeft = LocalPos - DragOp->DragOffset;
-	FIntPoint GhostCell(FMath::RoundToInt(ItemTopLeft.X / CellSize),
-		FMath::RoundToInt(ItemTopLeft.Y / CellSize));
-
-	GhostWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-	UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(GhostWidget->Slot);
-	if (CanvasSlot) {
-		CanvasSlot->SetPosition(
-			FVector2D(GhostCell.X * CellSize, GhostCell.Y * CellSize));
-		CanvasSlot->SetSize(FVector2D(DragOp->ItemSize.X * CellSize,
-			DragOp->ItemSize.Y * CellSize));
-	}
-
-	bool bCanPlace = Layout->CanPlaceItemAt(GhostCell, DragOp->ItemSize);
-	EGhostWidgetState TargetState =
-		bCanPlace ? EGhostWidgetState::Valid : EGhostWidgetState::Invalid;
-	GhostWidget->SetGhostState(TargetState);
+	Super::NativeOnDragCancelled(
+		InDragDropEvent,
+		InOperation);
 }

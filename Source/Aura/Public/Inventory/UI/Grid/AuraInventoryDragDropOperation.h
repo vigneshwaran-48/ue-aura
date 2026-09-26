@@ -5,23 +5,20 @@
 #include "Inventory/AuraItemHandle.h"
 #include "AuraInventoryDragDropOperation.generated.h"
 
+class UAuraInventoryInteractController;
+
 UCLASS()
-class AURA_API UAuraInventoryDragDropOperation : public UDragDropOperation {
-  GENERATED_BODY()
+class AURA_API UAuraInventoryDragDropOperation : public UDragDropOperation
+{
+    GENERATED_BODY()
 
- public:
-  UPROPERTY()
-  FAuraItemHandle ItemHandle;
+public:
+    UPROPERTY()
+    FAuraItemHandle ItemHandle;
 
-  UPROPERTY()
-  FIntPoint ItemSize;
+    UPROPERTY()
+    FVector2D DragOffset;
 
-  UPROPERTY()
-  TObjectPtr<UUserWidget> SourceWidget;
-
-  UPROPERTY()
-  FIntPoint OriginalPosition;
-
-  UPROPERTY()
-  FVector2D DragOffset;
+    UPROPERTY()
+    TObjectPtr<UAuraInventoryInteractController> InteractionController;
 };

@@ -29,10 +29,6 @@ class AURA_API UAuraInventoryItemWidget : public UUserWidget {
   virtual void NativeOnDragDetected(const FGeometry& InGeometry,
                                     const FPointerEvent& InMouseEvent,
                                     UDragDropOperation*& OutOperation) override;
-  
-  virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent,
-                                     UDragDropOperation* InOperation) override;
-  
 
   UPROPERTY(meta = (BindWidget))
   TObjectPtr<USizeBox> RootSizeBox;
