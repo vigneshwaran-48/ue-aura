@@ -67,6 +67,10 @@ public:
 
     bool CanPlaceAt(FIntPoint Position) const;
 
+    FIntPoint GetCellFromMousePosition(
+        const FVector2D& LocalMousePosition,
+        const FVector2D& DragOffset) const;
+
 private:
     UPROPERTY()
     TObjectPtr<UAuraInventoryGridWidget> GridWidget;

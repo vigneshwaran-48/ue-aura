@@ -124,8 +124,11 @@ bool UAuraInventoryInteractController::BeginItemMove(
 
 	SetSelection(OriginalPosition);
 
-	if (GridWidget)
-		GridWidget->PopulateItems();
+	if (GridWidget) {
+		GridWidget->BeginItemMoveVisual(Handle);
+		GridWidget->UpdateItemMoveVisual();
+		GridWidget->UpdateControllerMoveVisual();
+	}
 
 	return true;
 }
@@ -141,8 +144,10 @@ void UAuraInventoryInteractController::UpdateItemMove(
 	SelectedCell = Position;
 	bHasSelection = true;
 
-	if (GridWidget)
+	if (GridWidget) {
+		GridWidget->UpdateItemMoveVisual();
 		GridWidget->UpdateControllerMoveVisual();
+	}
 }
 
 bool UAuraInventoryInteractController::CommitItemMove()
@@ -162,6 +167,7 @@ bool UAuraInventoryInteractController::CommitItemMove()
 	MoveState = {};
 
 	if (GridWidget) {
+		GridWidget->ClearItemMoveVisual();
 		GridWidget->ClearControllerMoveVisual();
 		GridWidget->PopulateItems();
 		GridWidget->UpdateControllerSelectionVisual();
@@ -189,6 +195,7 @@ bool UAuraInventoryInteractController::CancelItemMove()
 	MoveState = {};
 
 	if (GridWidget) {
+		GridWidget->ClearItemMoveVisual();
 		GridWidget->ClearControllerMoveVisual();
 		GridWidget->PopulateItems();
 		GridWidget->UpdateControllerSelectionVisual();
@@ -334,4 +341,38 @@ bool UAuraInventoryInteractController::PickUpSelectedItem()
 bool UAuraInventoryInteractController::PlaceHeldItem()
 {
 	return CommitItemMove();
+}
+
+FIntPoint UAuraInventoryInteractController::GetCellFromMousePosition(
+	const FVector2D& LocalMousePosition,
+	const FVector2D& DragOffset) const
+{
+	if (!Layout || !MoveState.bIsActive)
+		return FIntPoint::ZeroValue;
+
+	const float CellSize = Layout->GetCellSize();
+
+	if (CellSize <= 0.0f)
+		return FIntPoint::ZeroValue;
+
+	const FVector2D ItemTopLeft =
+		LocalMousePosition - DragOffset;
+
+	const int32 MaxX =
+		Layout->GetColumns() - MoveState.ItemSize.X;
+
+	const int32 MaxY =
+		Layout->GetRows() - MoveState.ItemSize.Y;
+
+	return FIntPoint(
+		FMath::Clamp(
+			FMath::RoundToInt(
+				ItemTopLeft.X / CellSize),
+			0,
+			MaxX),
+		FMath::Clamp(
+			FMath::RoundToInt(
+				ItemTopLeft.Y / CellSize),
+			0,
+			MaxY));
 }

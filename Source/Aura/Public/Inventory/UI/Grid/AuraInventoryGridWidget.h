@@ -36,6 +36,12 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
 
   bool HandleDropOutsideGrid();
 
+  void BeginItemMoveVisual(const FAuraItemHandle& Handle);
+
+  void UpdateItemMoveVisual();
+
+  void ClearItemMoveVisual();
+
   UAuraInventoryInteractController* GetInteractionController() const
   {
       return InteractionController;
@@ -97,6 +103,9 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
 
   UPROPERTY()
   TObjectPtr<UAuraInventoryInteractController> InteractionController;
+
+  UPROPERTY()
+  TObjectPtr<UAuraInventoryItemWidget> MovingItemWidget;
 
   void BuildGrid();
 

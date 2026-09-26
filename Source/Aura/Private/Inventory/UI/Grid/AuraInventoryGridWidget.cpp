@@ -16,6 +16,7 @@
 #include "Inventory/UI/Grid/AuraInventorySlotWidget.h"
 #include "Inventory/AuraItemHandle.h"
 #include "Inventory/UI/Grid/AuraInventoryInteractController.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 
 void UAuraInventoryGridWidget::NativeConstruct() {
 	Super::NativeConstruct();
@@ -45,6 +46,8 @@ void UAuraInventoryGridWidget::NativeOnDeactivated()
 		InteractionController->CancelItemMove();
 		InteractionController->ClearSelection();
 	}
+
+	UWidgetBlueprintLibrary::CancelDragDrop();
 
 	Super::NativeOnDeactivated();
 }
@@ -435,54 +438,20 @@ bool UAuraInventoryGridWidget::NativeOnDragOver(
 	UAuraInventoryDragDropOperation* DragOp =
 		Cast<UAuraInventoryDragDropOperation>(InOperation);
 
-	if (!DragOp || !InteractionController ||
+	if (!DragOp ||
+		!InteractionController ||
 		!InteractionController->IsMovingItem()) {
 		return false;
 	}
-
-	UAuraInventoryComponent* Inventory =
-		GetInventoryComponent();
-
-	if (!Inventory) {
-		return false;
-	}
-
-	UAuraGridInventoryLayout* Layout =
-		Cast<UAuraGridInventoryLayout>(
-			Inventory->GetLayout());
-
-	if (!Layout) {
-		return false;
-	}
-
-	const float CellSize =
-		Layout->GetCellSize();
 
 	const FVector2D LocalMousePosition =
 		InGeometry.AbsoluteToLocal(
 			InDragDropEvent.GetScreenSpacePosition());
 
-	const FVector2D ItemTopLeft =
-		LocalMousePosition - DragOp->DragOffset;
-
-	const FIntPoint ItemSize =
-		InteractionController->GetMoveState().ItemSize;
-
-	const int32 MaxX =
-		Layout->GetColumns() - ItemSize.X;
-
-	const int32 MaxY =
-		Layout->GetRows() - ItemSize.Y;
-
-	const FIntPoint Cell(
-		FMath::Clamp(
-			FMath::RoundToInt(ItemTopLeft.X / CellSize),
-			0,
-			MaxX),
-		FMath::Clamp(
-			FMath::RoundToInt(ItemTopLeft.Y / CellSize),
-			0,
-			MaxY));
+	const FIntPoint Cell =
+		InteractionController->GetCellFromMousePosition(
+			LocalMousePosition,
+			DragOp->DragOffset);
 
 	InteractionController->UpdateItemMove(Cell);
 
@@ -513,6 +482,79 @@ void UAuraInventoryGridWidget::NativeOnDragCancelled(
 	Super::NativeOnDragCancelled(
 		InDragDropEvent,
 		InOperation);
+}
+
+void UAuraInventoryGridWidget::BeginItemMoveVisual(
+	const FAuraItemHandle& Handle)
+{
+	if (!ItemCanvas)
+		return;
+
+	if (TObjectPtr<UAuraInventoryItemWidget>* ExistingWidget =
+		ItemWidgets.Find(Handle)) {
+		MovingItemWidget = *ExistingWidget;
+		ItemWidgets.Remove(Handle);
+	}
+
+	if (!MovingItemWidget)
+		return;
+
+	MovingItemWidget->SetVisibility(
+		ESlateVisibility::HitTestInvisible);
+
+	if (UCanvasPanelSlot* CanvasSlot =
+		Cast<UCanvasPanelSlot>(MovingItemWidget->Slot)) {
+		CanvasSlot->SetZOrder(1);
+	}
+}
+
+void UAuraInventoryGridWidget::UpdateItemMoveVisual()
+{
+	if (!MovingItemWidget ||
+		!InteractionController ||
+		!InteractionController->IsMovingItem()) {
+		return;
+	}
+
+	UAuraInventoryComponent* Inventory =
+		GetInventoryComponent();
+
+	if (!Inventory)
+		return;
+
+	UAuraGridInventoryLayout* Layout =
+		Cast<UAuraGridInventoryLayout>(
+			Inventory->GetLayout());
+
+	if (!Layout)
+		return;
+
+	const FIntPoint Position =
+		InteractionController->GetMoveState().CurrentPosition;
+
+	const FIntPoint Size =
+		InteractionController->GetMoveState().ItemSize;
+
+	const float CellSize =
+		Layout->GetCellSize();
+
+	if (UCanvasPanelSlot* CanvasSlot =
+		Cast<UCanvasPanelSlot>(MovingItemWidget->Slot)) {
+		CanvasSlot->SetPosition(
+			FVector2D(
+				Position.X * CellSize,
+				Position.Y * CellSize));
+
+		CanvasSlot->SetSize(
+			FVector2D(
+				Size.X * CellSize,
+				Size.Y * CellSize));
+	}
+}
+
+void UAuraInventoryGridWidget::ClearItemMoveVisual()
+{
+	MovingItemWidget = nullptr;
 }
 
 // This method is for handling cases where the item is dragged outside of the grid and dropped with mouse.
