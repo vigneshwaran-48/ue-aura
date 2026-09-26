@@ -38,6 +38,7 @@ void UAuraInventoryGridWidget::NativeOnActivated()
 
 	InteractionController->Initialize(this);
 	InteractionController->InitializeSelection();
+
 }
 
 void UAuraInventoryGridWidget::NativeOnDeactivated()
