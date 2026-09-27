@@ -17,6 +17,10 @@
 #include "Inventory/AuraItemHandle.h"
 #include "Inventory/UI/Grid/AuraInventoryInteractController.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Engine/DataTable.h"
+#include "Input/CommonUIInputTypes.h"
+#include "UI/AuraUIManagerComponent.h"
+#include "AuraGameplayTags.h"
 
 void UAuraInventoryGridWidget::NativeConstruct() {
 	Super::NativeConstruct();
@@ -39,6 +43,30 @@ void UAuraInventoryGridWidget::NativeOnActivated()
 	InteractionController->Initialize(this);
 	InteractionController->InitializeSelection();
 
+	RegisterAction(MoveInputActionData, FSimpleDelegate::CreateUObject(this, &ThisClass::OnMoveSelected));
+	RegisterAction(CancelInputActionData, FSimpleDelegate::CreateUObject(this, &ThisClass::OnCancelPressed));
+	RegisterAction(CloseInventoryInputActionRowHandle, FSimpleDelegate::CreateUObject(this, &ThisClass::OnCloseRequested));
+
+	RegisterAction(MoveUpInputActionData, FSimpleDelegate::CreateLambda([this]()
+		{
+			MoveSelection(FIntPoint(0, -1));
+		}));
+
+	RegisterAction(MoveDownInputActionData, FSimpleDelegate::CreateLambda([this]()
+		{
+			MoveSelection(FIntPoint(0, 1));
+		}));
+
+	RegisterAction(MoveLeftInputActionData, FSimpleDelegate::CreateLambda([this]()
+		{
+			MoveSelection(FIntPoint(-1, 0));
+		}));
+
+	RegisterAction(MoveRightInputActionData, FSimpleDelegate::CreateLambda([this]()
+		{
+			MoveSelection(FIntPoint(1, 0));
+		}));
+
 }
 
 void UAuraInventoryGridWidget::NativeOnDeactivated()
@@ -51,6 +79,54 @@ void UAuraInventoryGridWidget::NativeOnDeactivated()
 	UWidgetBlueprintLibrary::CancelDragDrop();
 
 	Super::NativeOnDeactivated();
+}
+
+void UAuraInventoryGridWidget::RegisterAction(const FDataTableRowHandle& ActionHandle, const FSimpleDelegate& Delegate)
+{
+	if (!ActionHandle.IsNull())
+	{
+		FBindUIActionArgs BindArgs(ActionHandle, Delegate);
+
+		BindArgs.bIsPersistent = true;
+		BindArgs.bDisplayInActionBar = true;
+
+		RegisterUIActionBinding(BindArgs);
+	}
+}
+
+void UAuraInventoryGridWidget::MoveSelection(const FIntPoint& Direction)
+{
+	if (InteractionController)
+	{
+		InteractionController->MoveSelection(Direction);
+	}
+}
+
+void UAuraInventoryGridWidget::OnMoveSelected()
+{
+	if (InteractionController)
+	{
+		InteractionController->HandleConfirm();
+	}
+}
+
+void UAuraInventoryGridWidget::OnCancelPressed()
+{
+	if (InteractionController)
+	{
+		InteractionController->HandleCancel();
+	}
+}
+
+void UAuraInventoryGridWidget::OnCloseRequested()
+{
+	if (AActor* Owner = GetOwningPlayerPawn())
+	{
+		if (UAuraUIManagerComponent* UIManager = Owner->FindComponentByClass<UAuraUIManagerComponent>())
+		{
+			UIManager->ToggleUI(TAG_UI_Inventory);
+		}
+	}
 }
 
 void UAuraInventoryGridWidget::UpdateControllerSelectionVisual()
@@ -121,69 +197,6 @@ void UAuraInventoryGridWidget::UpdateControllerMoveVisual()
 
 	SetGhostCell(
 		InteractionController->GetMoveState().CurrentPosition);
-}
-
-// For now handling direct controller input, but it should be changed through the CommonUI.
-FReply UAuraInventoryGridWidget::NativeOnKeyDown(
-	const FGeometry& InGeometry,
-	const FKeyEvent& InKeyEvent)
-{
-	if (!InteractionController) {
-		return Super::NativeOnKeyDown(
-			InGeometry,
-			InKeyEvent);
-	}
-
-	const FKey Key = InKeyEvent.GetKey();
-
-	if (Key == EKeys::Up || Key == EKeys::Gamepad_DPad_Up)
-	{
-		InteractionController->MoveSelection(
-			FIntPoint(0, -1));
-
-		return FReply::Handled();
-	}
-
-	if (Key == EKeys::Down || Key == EKeys::Gamepad_DPad_Down)
-	{
-		InteractionController->MoveSelection(
-			FIntPoint(0, 1));
-
-		return FReply::Handled();
-	}
-
-	if (Key == EKeys::Left || Key == EKeys::Gamepad_DPad_Left)
-	{
-		InteractionController->MoveSelection(
-			FIntPoint(-1, 0));
-
-		return FReply::Handled();
-	}
-
-	if (Key == EKeys::Right || Key == EKeys::Gamepad_DPad_Right)
-	{
-		InteractionController->MoveSelection(
-			FIntPoint(1, 0));
-
-		return FReply::Handled();
-	}
-
-	// FaceButton_Bottom won't work here because it will be consumed by the CommonUI.
-	if (Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Top)
-	{
-		InteractionController->HandleConfirm();
-		return FReply::Handled();
-	}
-
-	if (Key == EKeys::Escape || Key == EKeys::Gamepad_FaceButton_Right)
-	{
-		InteractionController->HandleCancel();
-		return FReply::Handled();
-	}
-
-	return Super::NativeOnKeyDown(
-		InGeometry,
-		InKeyEvent);
 }
 
 void UAuraInventoryGridWidget::ClearControllerMoveVisual()

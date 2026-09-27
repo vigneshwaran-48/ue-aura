@@ -66,6 +66,27 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
   UPROPERTY(EditAnywhere, Category = "Grid")
   TSubclassOf<UAuraInventoryGhostWidget> GhostWidgetClass;
 
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+  FDataTableRowHandle MoveInputActionData;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+  FDataTableRowHandle CancelInputActionData;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+  FDataTableRowHandle MoveUpInputActionData;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+  FDataTableRowHandle MoveDownInputActionData;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+  FDataTableRowHandle MoveLeftInputActionData;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+  FDataTableRowHandle MoveRightInputActionData;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+  FDataTableRowHandle CloseInventoryInputActionRowHandle;
+
   virtual bool NativeOnDrop(const FGeometry& InGeometry,
                             const FDragDropEvent& InDragDropEvent,
                             UDragDropOperation* InOperation) override;
@@ -83,10 +104,6 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
   virtual void NativeOnActivated() override;
 
   virtual void NativeOnDeactivated() override;
-
-  virtual FReply NativeOnKeyDown(
-      const FGeometry& InGeometry,
-      const FKeyEvent& InKeyEvent) override;
 
  private:
   UPROPERTY()
@@ -113,4 +130,13 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
       FIntPoint Cell,
       bool bShowGhost = true);
 
+  void RegisterAction(const FDataTableRowHandle& ActionHandle, const FSimpleDelegate& Delegate);
+
+  void MoveSelection(const FIntPoint& Direction);
+
+  void OnMoveSelected();
+
+  void OnCancelPressed();
+
+  void OnCloseRequested();
 };
