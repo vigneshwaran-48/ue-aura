@@ -11,6 +11,9 @@ struct FAuraItemInstance {
   UPROPERTY()
   TObjectPtr<const UAuraItemDefinition> Definition = nullptr;
 
+  UPROPERTY()
+  int32 StackCount = 1;
+
   template <typename T>
   const T* FindFragment() const {
     return Definition ? Definition->FindFragment<T>() : nullptr;

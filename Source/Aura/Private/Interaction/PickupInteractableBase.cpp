@@ -106,32 +106,45 @@ void APickupInteractableBase::AttachToHand(AActor* Interactor, EHandType HandTyp
 
 void APickupInteractableBase::CompletePickupAndAddToInventory(AActor* Interactor)
 {
-	if (!Interactor || !ItemDefinition) return;
+	if (!Interactor || !ItemDefinition)
+		return;
 
-	UAuraInventoryComponent* InventoryComp = Interactor->FindComponentByClass<UAuraInventoryComponent>();
-	if (!InventoryComp) return;
+	UAuraInventoryComponent* InventoryComp =
+		Interactor->FindComponentByClass<UAuraInventoryComponent>();
 
-	FAuraItemHandle AddedHandle = InventoryComp->AddItem(ItemDefinition);
+	if (!InventoryComp)
+		return;
 
-	if (AddedHandle.IsValid())
+	const FAuraInventoryAddResult Result =
+		InventoryComp->AddItem(ItemDefinition, 1);
+
+	if (Result.QuantityAdded > 0)
 	{
+		UAuraEquipmentManagerComponent* EquipmentManager =
+			Interactor->FindComponentByClass<UAuraEquipmentManagerComponent>();
 
-		UAuraEquipmentManagerComponent* EquipmentManager = Interactor->FindComponentByClass<UAuraEquipmentManagerComponent>();
+		const UAuraItemFragment_EquippableItem* EquipmentDefinitionFrag =
+			ItemDefinition->FindFragment<UAuraItemFragment_EquippableItem>();
 
-		const UAuraItemFragment_EquippableItem* EquipmentDefinitionFrag = ItemDefinition->FindFragment<UAuraItemFragment_EquippableItem>();
-		if (EquipmentManager && EquipmentDefinitionFrag) {
-			EquipmentManager->EquipItem(EquipmentDefinitionFrag->EquipmentDefinition);
+		if (EquipmentManager && EquipmentDefinitionFrag)
+		{
+			EquipmentManager->EquipItem(
+				EquipmentDefinitionFrag->EquipmentDefinition);
 		}
+
 		OnFocusLost(Interactor);
 		OnHighlightLost(Interactor);
 		Destroy();
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to add %s to inventory: Inventory full or layout reject."), *GetNameSafe(this));
+	else {
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Failed to add %s to inventory: Inventory full or layout reject."),
+			*GetNameSafe(this));
 
-		// If inventory fails, detach and restore physics in world space
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		PickupMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		PickupMesh->SetCollisionEnabled(
+			ECollisionEnabled::QueryAndPhysics);
 	}
 }

@@ -14,6 +14,12 @@ public:
   UPROPERTY(EditDefaultsOnly, Category = "Item")
   FGameplayTag ItemTag;
 
+  UPROPERTY(EditDefaultsOnly, Category = "Item")
+  bool bStackable = false;
+
+  UPROPERTY(EditDefaultsOnly, Category = "Item", meta = (EditCondition = "bStackable", ClampMin = "1"))
+  int32 MaxStackSize = 1;
+
   UPROPERTY(EditDefaultsOnly, Instanced, Category = "Fragments")
   TArray<TObjectPtr<UAuraItemFragment>> Fragments;
 

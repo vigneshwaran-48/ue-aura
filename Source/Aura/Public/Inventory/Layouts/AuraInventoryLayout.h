@@ -23,6 +23,9 @@ class AURA_API UAuraInventoryLayout : public UObject {
   virtual void RemoveItem(const FAuraItemHandle& Handle)
       PURE_VIRTUAL(UAuraInventoryLayout::RemoveItem, );
 
+  virtual int32 GetAvailablePlacements(const UAuraItemDefinition* ItemDef) const
+      PURE_VIRTUAL(UAuraInventoryLayout::GetAvailablePlacements, return 0;);
+
   virtual bool CanAddItem(const UAuraItemDefinition* ItemDef) const PURE_VIRTUAL(UAuraInventoryLayout::CanAddItem, return false;);
 
  protected:

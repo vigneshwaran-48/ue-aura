@@ -20,44 +20,54 @@ UAuraGridInventoryLayout::GetItemSize(const FAuraItemHandle& Handle) const {
 
 bool UAuraGridInventoryLayout::TryAddItem(const FAuraItemHandle& Handle) {
 	if (!IsSpatialItem(Handle)) {
-		UE_LOG(
-			LogTemp, Warning,
-			TEXT("Non Spatial item came to layout, Skipping validation for it."));
 		return true;
 	}
 
 	const FIntPoint Size = GetItemSize(Handle);
 
-	for (int y = 0; y < Rows; y++) {
-		for (int x = 0; x < Columns; x++) {
-			FIntPoint Pos(x, y);
+	for (int32 Y = 0; Y < Rows; ++Y) {
+		for (int32 X = 0; X < Columns; ++X) {
+			const FIntPoint Position(X, Y);
 
-			if (CanPlaceItemAt(Pos, Size)) {
-				ItemPositions.Add(Handle, Pos);
-
-				for (int dy = 0; dy < Size.Y; dy++)
-					for (int dx = 0; dx < Size.X; dx++)
-						OccupiedCells.Add(Pos + FIntPoint(dx, dy));
-
-				return true;
+			if (!CanPlaceItemAt(Position, Size)) {
+				continue;
 			}
+
+			ItemPositions.Add(Handle, Position);
+			AddOccupiedCells(Position, Size, OccupiedCells);
+			return true;
 		}
 	}
 
 	return false;
 }
 
-bool UAuraGridInventoryLayout::CanPlaceItemAt(FIntPoint Position,
+bool UAuraGridInventoryLayout::CanPlaceItemAt(
+	FIntPoint Position,
 	FIntPoint Size) const {
-	if (Position.X < 0 || Position.Y < 0)
-		return false;
-	if (Position.X + Size.X > Columns || Position.Y + Size.Y > Rows)
-		return false;
+	return CanPlaceItemAt(Position, Size, OccupiedCells);
+}
 
-	for (int y = 0; y < Size.Y; y++)
-		for (int x = 0; x < Size.X; x++)
-			if (OccupiedCells.Contains(Position + FIntPoint(x, y)))
+bool UAuraGridInventoryLayout::CanPlaceItemAt(
+	FIntPoint Position,
+	FIntPoint Size,
+	const TSet<FIntPoint>& InOccupiedCells) const {
+	if (Position.X < 0 || Position.Y < 0) {
+		return false;
+	}
+
+	if (Position.X + Size.X > Columns ||
+		Position.Y + Size.Y > Rows) {
+		return false;
+	}
+
+	for (int32 Y = 0; Y < Size.Y; ++Y) {
+		for (int32 X = 0; X < Size.X; ++X) {
+			if (InOccupiedCells.Contains(Position + FIntPoint(X, Y))) {
 				return false;
+			}
+		}
+	}
 
 	return true;
 }
@@ -67,18 +77,13 @@ void UAuraGridInventoryLayout::RemoveItem(const FAuraItemHandle& Handle) {
 		return;
 	}
 
-	if (!ItemPositions.Contains(Handle))
+	const FIntPoint* Position = ItemPositions.Find(Handle);
+	if (!Position) {
 		return;
-
-	FIntPoint Pos = ItemPositions[Handle];
-	FIntPoint Size = GetItemSize(Handle);
-
-	for (int y = 0; y < Size.Y; y++) {
-		for (int x = 0; x < Size.X; x++) {
-			OccupiedCells.Remove(Pos + FIntPoint(x, y));
-		}
 	}
 
+	const FIntPoint Size = GetItemSize(Handle);
+	RemoveOccupiedCells(*Position, Size, OccupiedCells);
 	ItemPositions.Remove(Handle);
 }
 
@@ -118,40 +123,106 @@ bool UAuraGridInventoryLayout::TryAddItemAt(const FAuraItemHandle& Handle,
 
 	ItemPositions.Add(Handle, Position);
 
-	for (int32 Y = 0; Y < Size.Y; ++Y) {
-		for (int32 X = 0; X < Size.X; ++X) {
-			OccupiedCells.Add(Position + FIntPoint(X, Y));
-		}
-	}
-
+	AddOccupiedCells(Position, Size, OccupiedCells);
 	return true;
 }
 
-bool UAuraGridInventoryLayout::CanAddItem(const UAuraItemDefinition* ItemDef) const
-{
-	if (!ItemDef) return false;
+bool UAuraGridInventoryLayout::CanAddItem(
+	const UAuraItemDefinition* ItemDef) const {
+	return GetAvailablePlacements(ItemDef) > 0;
+}
 
-	const UAuraItemFragment_LayoutBehavior* Behavior = ItemDef->FindFragment<UAuraItemFragment_LayoutBehavior>();
-	if (Behavior && Behavior->LayoutBehaviorTag == TAG_AURA_INVENTORY_LAYOUT_NONSPATIAL)
-	{
-		return true;
+int32 UAuraGridInventoryLayout::GetAvailablePlacements(
+	const UAuraItemDefinition* ItemDef) const {
+	if (!ItemDef) {
+		return 0;
 	}
 
-	const UAuraItemFragment_Size* SizeFrag = ItemDef->FindFragment<UAuraItemFragment_Size>();
-	FIntPoint Size = SizeFrag ? SizeFrag->Size : FIntPoint(1, 1);
+	if (!IsSpatialItem(ItemDef)) {
+		return TNumericLimits<int32>::Max();
+	}
 
-	for (int32 y = 0; y < Rows; y++)
-	{
-		for (int32 x = 0; x < Columns; x++)
-		{
-			if (CanPlaceItemAt(FIntPoint(x, y), Size))
-			{
-				return true;
+	const UAuraItemFragment_Size* SizeFrag =
+		ItemDef->FindFragment<UAuraItemFragment_Size>();
+	const FIntPoint Size = SizeFrag ? SizeFrag->Size : FIntPoint(1, 1);
+
+	if (Size.X <= 0 || Size.Y <= 0) {
+		return 0;
+	}
+
+	TSet<FIntPoint> SimulatedOccupiedCells = OccupiedCells;
+	int32 PlacementCount = 0;
+
+	while (true) {
+		bool bPlaced = false;
+
+		for (int32 Y = 0; Y < Rows && !bPlaced; ++Y) {
+			for (int32 X = 0; X < Columns; ++X) {
+				const FIntPoint Position(X, Y);
+
+				if (!CanPlaceItemAt(
+					Position,
+					Size,
+					SimulatedOccupiedCells)) {
+					continue;
+				}
+
+				AddOccupiedCells(
+					Position,
+					Size,
+					SimulatedOccupiedCells);
+
+				++PlacementCount;
+				bPlaced = true;
+				break;
 			}
+		}
+
+		if (!bPlaced) {
+			break;
 		}
 	}
 
-	return false;
+	return PlacementCount;
+}
+
+bool UAuraGridInventoryLayout::IsSpatialItem(
+	const UAuraItemDefinition* ItemDef) const {
+	if (!ItemDef) {
+		return false;
+	}
+
+	const UAuraItemFragment_LayoutBehavior* Behavior =
+		ItemDef->FindFragment<UAuraItemFragment_LayoutBehavior>();
+
+	if (!Behavior) {
+		return true;
+	}
+
+	return Behavior->LayoutBehaviorTag !=
+		TAG_AURA_INVENTORY_LAYOUT_NONSPATIAL;
+}
+
+void UAuraGridInventoryLayout::AddOccupiedCells(
+	FIntPoint Position,
+	FIntPoint Size,
+	TSet<FIntPoint>& InOccupiedCells) const {
+	for (int32 Y = 0; Y < Size.Y; ++Y) {
+		for (int32 X = 0; X < Size.X; ++X) {
+			InOccupiedCells.Add(Position + FIntPoint(X, Y));
+		}
+	}
+}
+
+void UAuraGridInventoryLayout::RemoveOccupiedCells(
+	FIntPoint Position,
+	FIntPoint Size,
+	TSet<FIntPoint>& InOccupiedCells) const {
+	for (int32 Y = 0; Y < Size.Y; ++Y) {
+		for (int32 X = 0; X < Size.X; ++X) {
+			InOccupiedCells.Remove(Position + FIntPoint(X, Y));
+		}
+	}
 }
 
 bool UAuraGridInventoryLayout::IsSpatialItem(

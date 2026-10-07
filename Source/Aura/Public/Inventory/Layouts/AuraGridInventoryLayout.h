@@ -8,55 +8,61 @@ class UAuraItemDefinition;
 
 UCLASS(Blueprintable, EditInlineNew)
 class AURA_API UAuraGridInventoryLayout : public UAuraInventoryLayout {
-  GENERATED_BODY()
+    GENERATED_BODY()
 
- public:
-  UPROPERTY(EditAnywhere, Category = "Grid")
-  int32 Rows = 5;
+public:
+    UPROPERTY(EditAnywhere, Category = "Grid")
+    int32 Rows = 5;
 
-  UPROPERTY(EditAnywhere, Category = "Grid")
-  int32 Columns = 8;
+    UPROPERTY(EditAnywhere, Category = "Grid")
+    int32 Columns = 8;
 
-  UPROPERTY(EditAnywhere, Category = "Grid")
-  float CellSize = 64.f;
+    UPROPERTY(EditAnywhere, Category = "Grid")
+    float CellSize = 64.f;
 
-  virtual bool TryAddItem(const FAuraItemHandle& Handle) override;
+    virtual bool TryAddItem(const FAuraItemHandle& Handle) override;
 
-  virtual void RemoveItem(const FAuraItemHandle& Handle) override;
+    virtual void RemoveItem(const FAuraItemHandle& Handle) override;
 
-  virtual bool CanAddItem(const UAuraItemDefinition* ItemDef) const override;
+    virtual bool CanAddItem(const UAuraItemDefinition* ItemDef) const override;
 
-  bool CanPlaceItemAt(FIntPoint Position, FIntPoint Size) const;
+    virtual int32 GetAvailablePlacements(const UAuraItemDefinition* ItemDef) const override;
 
-  bool IsCellOccupied(FIntPoint Cell) const;
+    bool CanPlaceItemAt(FIntPoint Position, FIntPoint Size) const;
 
-  bool GetItemPosition(const FAuraItemHandle& Handle, FIntPoint& OutPos) const;
+    bool IsCellOccupied(FIntPoint Cell) const;
 
-  bool GetItemAtCell(
-      FIntPoint Cell,
-      FAuraItemHandle& OutHandle) const;
+    bool GetItemPosition(const FAuraItemHandle& Handle, FIntPoint& OutPos) const;
 
-  bool TryAddItemAt(const FAuraItemHandle& Handle, FIntPoint Position);
+    bool GetItemAtCell(
+        FIntPoint Cell,
+        FAuraItemHandle& OutHandle) const;
 
-  UFUNCTION(BlueprintCallable)
-  int32 GetRows() const { return Rows; }
+    bool TryAddItemAt(const FAuraItemHandle& Handle, FIntPoint Position);
 
-  UFUNCTION(BlueprintCallable)
-  int32 GetColumns() const { return Columns; }
+    UFUNCTION(BlueprintCallable)
+    int32 GetRows() const { return Rows; }
 
-  UFUNCTION(BlueprintCallable)
-  float GetCellSize() const { return CellSize; }
+    UFUNCTION(BlueprintCallable)
+    int32 GetColumns() const { return Columns; }
 
-  UFUNCTION(BlueprintCallable)
-  void GetAllItems(TArray<FAuraItemHandle>& OutHandles) const;
+    UFUNCTION(BlueprintCallable)
+    float GetCellSize() const { return CellSize; }
 
-  UFUNCTION(BlueprintCallable)
-  FIntPoint GetItemSize(const FAuraItemHandle& Handle) const;
+    UFUNCTION(BlueprintCallable)
+    void GetAllItems(TArray<FAuraItemHandle>& OutHandles) const;
 
- private:
-  TMap<FAuraItemHandle, FIntPoint> ItemPositions;
+    UFUNCTION(BlueprintCallable)
+    FIntPoint GetItemSize(const FAuraItemHandle& Handle) const;
 
-  TSet<FIntPoint> OccupiedCells;
+private:
+    TMap<FAuraItemHandle, FIntPoint> ItemPositions;
 
-  bool IsSpatialItem(const FAuraItemHandle& Handle) const;
+    TSet<FIntPoint> OccupiedCells;
+
+    bool IsSpatialItem(const FAuraItemHandle& Handle) const;
+    bool IsSpatialItem(const UAuraItemDefinition* ItemDef) const;
+    bool CanPlaceItemAt(FIntPoint Position, FIntPoint Size, const TSet<FIntPoint>& InOccupiedCells) const;
+    void AddOccupiedCells(FIntPoint Position, FIntPoint Size, TSet<FIntPoint>& InOccupiedCells) const;
+    void RemoveOccupiedCells(FIntPoint Position, FIntPoint Size, TSet<FIntPoint>& InOccupiedCells) const;
 };
