@@ -1,6 +1,8 @@
 #pragma once
 
 #include "CommonActivatableWidget.h"
+#include "UI/AuraUIContext.h"
+#include "GameplayTagContainer.h"
 #include "AuraActivatableWidget.generated.h"
 
 /**
@@ -40,4 +42,8 @@ class AURA_API UAuraActivatableWidget : public UCommonActivatableWidget {
   UPROPERTY(EditDefaultsOnly, Category = Input)
   EMouseCaptureMode GameMouseCaptureMode =
       EMouseCaptureMode::CapturePermanently;
+
+  bool ConsumeUIContext(
+      FGameplayTag UITag,
+      FAuraUIContext& OutContext);
 };

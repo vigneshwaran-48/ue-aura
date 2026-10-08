@@ -3,27 +3,34 @@
 #include "Components/ActorComponent.h"
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "UI/AuraUIContext.h"
 #include "AuraUIManagerComponent.generated.h"
 
 class UAuraUIWidgetConfig;
 class UCommonActivatableWidget;
 
 UCLASS(ClassGroup = (UI), meta = (BlueprintSpawnableComponent))
-class AURA_API UAuraUIManagerComponent : public UActorComponent {
-  GENERATED_BODY()
+class AURA_API UAuraUIManagerComponent : public UActorComponent
+{
+    GENERATED_BODY()
 
- public:
-  void EnableUI(FGameplayTag Tag);
-  void DisableUI(FGameplayTag Tag);
-  void ToggleUI(FGameplayTag Tag);
+public:
+    void EnableUI(FGameplayTag Tag);
 
- protected:
-  UPROPERTY(EditDefaultsOnly, Category = "UI")
-  TObjectPtr<UAuraUIWidgetConfig> WidgetConfig;
+    void EnableUIWithContext(
+        FGameplayTag Tag,
+        const FAuraUIContext& Context);
 
- private:
-  UPROPERTY()
-  TMap<FGameplayTag, TObjectPtr<UCommonActivatableWidget>> ActiveWidgets;
+    void DisableUI(FGameplayTag Tag);
+    void ToggleUI(FGameplayTag Tag);
 
-  UCommonActivatableWidget* CreateAndPush(FGameplayTag Tag);
+protected:
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TObjectPtr<UAuraUIWidgetConfig> WidgetConfig;
+
+private:
+    UPROPERTY()
+    TMap<FGameplayTag, TObjectPtr<UCommonActivatableWidget>> ActiveWidgets;
+
+    UCommonActivatableWidget* CreateAndPush(FGameplayTag Tag);
 };

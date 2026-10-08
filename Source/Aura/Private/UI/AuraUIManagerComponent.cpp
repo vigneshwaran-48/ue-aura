@@ -5,6 +5,7 @@
 #include "CommonUIExtensions.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/AuraUIWidgetConfig.h"
+#include "UI/AuraUIContextSubsystem.h"
 
 void UAuraUIManagerComponent::ToggleUI(FGameplayTag Tag) {
   if (ActiveWidgets.Contains(Tag)) {
@@ -59,4 +60,58 @@ UCommonActivatableWidget* UAuraUIManagerComponent::CreateAndPush(
   UE_LOG(LogTemp, Warning, TEXT("Pushing widget for tag: %s"), *Tag.ToString());
   return UCommonUIExtensions::PushContentToLayer_ForPlayer(
       PC->GetLocalPlayer(), Entry->LayerTag, Entry->WidgetClass);
+}
+
+void UAuraUIManagerComponent::EnableUIWithContext(
+    FGameplayTag Tag,
+    const FAuraUIContext& Context)
+{
+    if (ActiveWidgets.Contains(Tag))
+        return;
+
+    APlayerController* PC = nullptr;
+
+    if (APawn* Pawn = Cast<APawn>(GetOwner()))
+    {
+        PC = Cast<APlayerController>(Pawn->GetController());
+    }
+    else
+    {
+        PC = GetOwner()->GetInstigatorController<APlayerController>();
+    }
+
+    if (!PC || !PC->GetLocalPlayer())
+    {
+        UE_LOG(
+            LogTemp,
+            Warning,
+            TEXT("UIManager: Invalid PC/LocalPlayer"));
+        return;
+    }
+
+    UAuraUIContextSubsystem* ContextSubsystem =
+        PC->GetLocalPlayer()->GetSubsystem<UAuraUIContextSubsystem>();
+
+    if (!ContextSubsystem)
+    {
+        UE_LOG(
+            LogTemp,
+            Warning,
+            TEXT("UIManager: Failed to get UI Context Subsystem"));
+        return;
+    }
+
+    ContextSubsystem->SetContext(Tag, Context);
+
+    UCommonActivatableWidget* Widget = CreateAndPush(Tag);
+
+    if (Widget)
+    {
+        ActiveWidgets.Add(Tag, Widget);
+    }
+    else
+    {
+        // Don't leave stale context behind if the UI failed to open.
+        ContextSubsystem->ClearContext(Tag);
+    }
 }
