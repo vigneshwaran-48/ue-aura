@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "Inventory/AuraItemHandle.h"
+#include "Inventory/Actions/AuraItemAction.h"
+#include "UI/AuraUIContext.h"
 #include "AuraInventoryInteractController.generated.h"
 
 class UAuraInventoryGridWidget;
@@ -71,6 +73,12 @@ public:
         const FVector2D& LocalMousePosition,
         const FVector2D& DragOffset) const;
 
+    TArray<FAuraItemAction> GetAvailableActions(
+        const FAuraItemHandle& ItemHandle,
+        const FAuraUIContext& UIContext) const;
+
+    bool GetSelectedItem(FAuraItemHandle& OutHandle) const;
+
 private:
     UPROPERTY()
     TObjectPtr<UAuraInventoryGridWidget> GridWidget;
@@ -91,8 +99,6 @@ private:
         FIntPoint Direction) const;
 
     bool IsValidCell(FIntPoint Cell) const;
-
-    bool GetSelectedItem(FAuraItemHandle& OutHandle) const;
 
     void SetSelection(FIntPoint Cell);
 

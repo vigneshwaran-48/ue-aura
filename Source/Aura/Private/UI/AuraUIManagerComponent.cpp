@@ -8,11 +8,23 @@
 #include "UI/AuraUIContextSubsystem.h"
 
 void UAuraUIManagerComponent::ToggleUI(FGameplayTag Tag) {
-  if (ActiveWidgets.Contains(Tag)) {
-    DisableUI(Tag);
-  } else {
-    EnableUI(Tag);
-  }
+    const bool bIsActiveWidget = ActiveWidgets.Contains(Tag);
+
+    UE_LOG(LogTemp, Warning,
+        TEXT("ToggleUI: %s, Active=%d"),
+        *Tag.ToString(), bIsActiveWidget);
+
+    if (bIsActiveWidget)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Calling DisableUI"));
+        DisableUI(Tag);
+        UE_LOG(LogTemp, Warning, TEXT("DisableUI returned"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Calling EnableUI"));
+        EnableUI(Tag);
+    }
 }
 
 void UAuraUIManagerComponent::EnableUI(FGameplayTag Tag) {

@@ -4,6 +4,9 @@
 #include "CoreMinimal.h"
 #include "UI/AuraActivatableWidget.h"
 #include "Inventory/AuraItemHandle.h"
+#include "UI/AuraUIContext.h"
+#include "Inventory/Actions/AuraItemAction.h"
+#include "Framework/Application/NavigationConfig.h"
 #include "AuraInventoryGridWidget.generated.h"
 
 class UUniformGridPanel;
@@ -16,6 +19,8 @@ class UAuraInventoryItemWidget;
 class UAuraInventoryDragDropOperation;
 class UAuraInventoryGhostWidget;
 class UAuraInventoryInteractController;
+
+class UAuraItemActionMenuWidget;
 
 UCLASS()
 class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
@@ -87,6 +92,9 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
   FDataTableRowHandle CloseInventoryInputActionRowHandle;
 
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+  FDataTableRowHandle OpenItemActionsInputActionData;
+
   virtual bool NativeOnDrop(const FGeometry& InGeometry,
                             const FDragDropEvent& InDragDropEvent,
                             UDragDropOperation* InOperation) override;
@@ -124,13 +132,25 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
   UPROPERTY()
   TObjectPtr<UAuraInventoryItemWidget> MovingItemWidget;
 
+  UPROPERTY(EditDefaultsOnly, Category = "Actions")
+  TSubclassOf<UAuraItemActionMenuWidget> ActionMenuWidgetClass;
+
+  UPROPERTY()
+  TObjectPtr<UAuraItemActionMenuWidget> ActionMenuWidget;
+
+  FAuraUIContext InventoryUIContext;
+
+  bool bHasInventoryUIContext = false;
+
+  void OnOpenItemActionsRequested();
+
   void BuildGrid();
 
   void SetGhostCell(
       FIntPoint Cell,
       bool bShowGhost = true);
 
-  void RegisterAction(const FDataTableRowHandle& ActionHandle, const FSimpleDelegate& Delegate);
+  void RegisterAction(const FDataTableRowHandle& ActionHandle, const FSimpleDelegate& Delegate, bool bConsumeInput = false);
 
   void MoveSelection(const FIntPoint& Direction);
 
@@ -139,4 +159,20 @@ class AURA_API UAuraInventoryGridWidget : public UAuraActivatableWidget {
   void OnCancelPressed();
 
   void OnCloseRequested();
+
+  void HandleContextMenuActionSelected(
+      FAuraItemHandle ItemHandle,
+      FAuraItemAction Action);
+
+  void HandleContextMenuClosed();
+
+  void CloseItemActionMenu();
+
+
+  TSharedPtr<FNavigationConfig> PreviousNavigationConfig;
+  bool bHasSavedNavigationConfig = false;
+
+  void DisableSlateNavigation();
+  void RestoreSlateNavigation();
+
 };

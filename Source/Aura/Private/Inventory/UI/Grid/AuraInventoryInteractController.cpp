@@ -3,6 +3,9 @@
 #include "Inventory/AuraInventoryComponent.h"
 #include "Inventory/Layouts/AuraGridInventoryLayout.h"
 #include "Inventory/UI/Grid/AuraInventoryGridWidget.h"
+#include "Inventory/Actions/AuraItemActionCondition.h"
+#include "Inventory/Fragments/AuraItemFragment_Actions.h"
+#include "Inventory/AuraItemInstance.h"
 
 void UAuraInventoryInteractController::Initialize(
 	UAuraInventoryGridWidget* InGridWidget)
@@ -375,4 +378,47 @@ FIntPoint UAuraInventoryInteractController::GetCellFromMousePosition(
 				ItemTopLeft.Y / CellSize),
 			0,
 			MaxY));
+}
+
+TArray<FAuraItemAction>
+UAuraInventoryInteractController::GetAvailableActions(
+	const FAuraItemHandle& ItemHandle,
+	const FAuraUIContext& UIContext) const
+{
+	TArray<FAuraItemAction> AvailableActions;
+
+	if (!Inventory || !ItemHandle.IsValid())
+		return AvailableActions;
+
+	const FAuraItemInstance* Item =
+		Inventory->FindItem(ItemHandle);
+
+	if (!Item || !Item->Definition)
+		return AvailableActions;
+
+	const UAuraItemFragment_Actions* ActionsFragment =
+		Item->FindFragment<UAuraItemFragment_Actions>();
+
+	if (!ActionsFragment)
+		return AvailableActions;
+
+	FAuraItemActionContext Context;
+	Context.Inventory = Inventory;
+	Context.ItemHandle = ItemHandle;
+	Context.UIContext = UIContext;
+
+	for (const FAuraItemAction& Action : ActionsFragment->Actions)
+	{
+		// No condition means the action is always available.
+		if (!Action.Condition)
+		{
+			AvailableActions.Add(Action);
+			continue;
+		}
+
+		if (Action.Condition->Evaluate(Context))
+			AvailableActions.Add(Action);
+	}
+
+	return AvailableActions;
 }

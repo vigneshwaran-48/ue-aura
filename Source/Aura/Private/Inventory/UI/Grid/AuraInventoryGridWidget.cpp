@@ -21,6 +21,12 @@
 #include "Input/CommonUIInputTypes.h"
 #include "UI/AuraUIManagerComponent.h"
 #include "AuraGameplayTags.h"
+#include "UI/AuraUIContext.h"
+#include "UI/AuraUIContextSubsystem.h"
+#include "Inventory/Actions/AuraItemAction.h"
+#include "Inventory/UI/Actions/AuraItemActionMenuWidget.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Framework/Application/NavigationConfig.h"
 
 void UAuraInventoryGridWidget::NativeConstruct() {
 	Super::NativeConstruct();
@@ -29,6 +35,13 @@ void UAuraInventoryGridWidget::NativeConstruct() {
 void UAuraInventoryGridWidget::NativeOnActivated()
 {
 	Super::NativeOnActivated();
+
+	DisableSlateNavigation();
+
+	InventoryUIContext = FAuraUIContext{};
+	bHasInventoryUIContext = false;
+
+	ConsumeUIContext(TAG_UI_Inventory, InventoryUIContext);
 
 	BuildGrid();
 	PopulateItems();
@@ -45,7 +58,7 @@ void UAuraInventoryGridWidget::NativeOnActivated()
 
 	RegisterAction(MoveInputActionData, FSimpleDelegate::CreateUObject(this, &ThisClass::OnMoveSelected));
 	RegisterAction(CancelInputActionData, FSimpleDelegate::CreateUObject(this, &ThisClass::OnCancelPressed));
-	RegisterAction(CloseInventoryInputActionRowHandle, FSimpleDelegate::CreateUObject(this, &ThisClass::OnCloseRequested));
+	RegisterAction(CloseInventoryInputActionRowHandle, FSimpleDelegate::CreateUObject(this, &ThisClass::OnCloseRequested), true);
 
 	RegisterAction(MoveUpInputActionData, FSimpleDelegate::CreateLambda([this]()
 		{
@@ -67,10 +80,18 @@ void UAuraInventoryGridWidget::NativeOnActivated()
 			MoveSelection(FIntPoint(1, 0));
 		}));
 
+	RegisterAction(
+		OpenItemActionsInputActionData,
+		FSimpleDelegate::CreateUObject(
+			this,
+			&ThisClass::OnOpenItemActionsRequested));
 }
 
 void UAuraInventoryGridWidget::NativeOnDeactivated()
 {
+
+	RestoreSlateNavigation();
+
 	if (InteractionController) {
 		InteractionController->CancelItemMove();
 		InteractionController->ClearSelection();
@@ -78,16 +99,19 @@ void UAuraInventoryGridWidget::NativeOnDeactivated()
 
 	UWidgetBlueprintLibrary::CancelDragDrop();
 
+	CloseItemActionMenu();
+
 	Super::NativeOnDeactivated();
 }
 
-void UAuraInventoryGridWidget::RegisterAction(const FDataTableRowHandle& ActionHandle, const FSimpleDelegate& Delegate)
+void UAuraInventoryGridWidget::RegisterAction(const FDataTableRowHandle& ActionHandle, const FSimpleDelegate& Delegate, bool bConsumeInput)
 {
 	if (!ActionHandle.IsNull())
 	{
 		FBindUIActionArgs BindArgs(ActionHandle, Delegate);
 
-		BindArgs.bIsPersistent = true;
+		BindArgs.bIsPersistent = false;
+		BindArgs.bConsumeInput = bConsumeInput;
 		BindArgs.bDisplayInActionBar = true;
 
 		RegisterUIActionBinding(BindArgs);
@@ -96,6 +120,11 @@ void UAuraInventoryGridWidget::RegisterAction(const FDataTableRowHandle& ActionH
 
 void UAuraInventoryGridWidget::MoveSelection(const FIntPoint& Direction)
 {
+	if (ActionMenuWidget && ActionMenuWidget->IsActivated()) {
+		// If context menu is open stop navigation in the inventory grid.
+		return;
+	}
+
 	if (InteractionController)
 	{
 		InteractionController->MoveSelection(Direction);
@@ -104,6 +133,7 @@ void UAuraInventoryGridWidget::MoveSelection(const FIntPoint& Direction)
 
 void UAuraInventoryGridWidget::OnMoveSelected()
 {
+	
 	if (InteractionController)
 	{
 		InteractionController->HandleConfirm();
@@ -582,4 +612,186 @@ bool UAuraInventoryGridWidget::HandleDropOutsideGrid()
 	InteractionController->CancelItemMove();
 
 	return true;
+}
+
+void UAuraInventoryGridWidget::OnOpenItemActionsRequested()
+{
+	if (!InteractionController ||
+		InteractionController->IsMovingItem() ||
+		!ItemCanvas ||
+		!ActionMenuWidgetClass)
+	{
+		return;
+	}
+
+	FAuraItemHandle ItemHandle;
+
+	if (!InteractionController->GetSelectedItem(ItemHandle))
+		return;
+
+	const TArray<FAuraItemAction> AvailableActions =
+		InteractionController->GetAvailableActions(
+			ItemHandle,
+			InventoryUIContext);
+
+	if (AvailableActions.IsEmpty())
+		return;
+
+	TObjectPtr<UAuraInventoryItemWidget>* ItemWidgetPtr =
+		ItemWidgets.Find(ItemHandle);
+
+	if (!ItemWidgetPtr || !*ItemWidgetPtr)
+		return;
+
+	UCanvasPanelSlot* ItemSlot =
+		Cast<UCanvasPanelSlot>((*ItemWidgetPtr)->Slot);
+
+	if (!ItemSlot)
+		return;
+
+	CloseItemActionMenu();
+
+	ActionMenuWidget = CreateWidget<UAuraItemActionMenuWidget>(
+		GetOwningPlayer(),
+		ActionMenuWidgetClass);
+
+	if (!ActionMenuWidget)
+		return;
+
+	ActionMenuWidget->SetActions(
+		ItemHandle,
+		AvailableActions);
+
+	ActionMenuWidget->OnActionSelected.BindUObject(
+		this,
+		&ThisClass::HandleContextMenuActionSelected);
+
+	ActionMenuWidget->OnMenuClosed.BindUObject(
+		this,
+		&ThisClass::HandleContextMenuClosed);
+
+	UCanvasPanelSlot* MenuSlot =
+		ItemCanvas->AddChildToCanvas(ActionMenuWidget);
+
+	if (!MenuSlot)
+	{
+		ActionMenuWidget = nullptr;
+		return;
+	}
+
+	MenuSlot->SetAutoSize(true);
+	MenuSlot->SetZOrder(100);
+
+	ActionMenuWidget->ForceLayoutPrepass();
+
+	const FVector2D ItemPosition = ItemSlot->GetPosition();
+	const FVector2D ItemSize = ItemSlot->GetSize();
+	const FVector2D MenuSize = ActionMenuWidget->GetDesiredSize();
+	const FVector2D CanvasSize =
+		ItemCanvas->GetCachedGeometry().GetLocalSize();
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("Action menu: DesiredSize=(%.1f, %.1f), CanvasSize=(%.1f, %.1f), Entries=%d"),
+		MenuSize.X,
+		MenuSize.Y,
+		CanvasSize.X,
+		CanvasSize.Y,
+		AvailableActions.Num());
+
+	constexpr float Gap = 4.0f;
+
+	FVector2D Position(
+		ItemPosition.X + ItemSize.X + Gap,
+		ItemPosition.Y + ItemSize.Y + Gap);
+
+	if (Position.X + MenuSize.X > CanvasSize.X)
+		Position.X = ItemPosition.X - MenuSize.X - Gap;
+
+	if (Position.Y + MenuSize.Y > CanvasSize.Y)
+		Position.Y = ItemPosition.Y + ItemSize.Y - MenuSize.Y;
+
+	Position.X = FMath::Clamp(
+		Position.X,
+		0.0f,
+		FMath::Max(0.0f, CanvasSize.X - MenuSize.X));
+
+	Position.Y = FMath::Clamp(
+		Position.Y,
+		0.0f,
+		FMath::Max(0.0f, CanvasSize.Y - MenuSize.Y));
+
+	MenuSlot->SetPosition(Position);
+
+	ActionMenuWidget->ActivateWidget();
+}
+
+void UAuraInventoryGridWidget::HandleContextMenuActionSelected(
+	FAuraItemHandle ItemHandle,
+	FAuraItemAction Action)
+{
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("Selected action '%s' for item."),
+		*Action.DisplayName.ToString());
+
+	CloseItemActionMenu();
+}
+
+void UAuraInventoryGridWidget::HandleContextMenuClosed()
+{
+	CloseItemActionMenu();
+}
+
+void UAuraInventoryGridWidget::CloseItemActionMenu()
+{
+	if (!ActionMenuWidget)
+		return;
+
+	UAuraItemActionMenuWidget* Menu = ActionMenuWidget;
+	ActionMenuWidget = nullptr;
+
+	if (Menu->IsActivated())
+		Menu->DeactivateWidget();
+
+	Menu->RemoveFromParent();
+
+	SetKeyboardFocus();
+}
+
+void UAuraInventoryGridWidget::DisableSlateNavigation()
+{
+	if (!FSlateApplication::IsInitialized() ||
+		bHasSavedNavigationConfig)
+		return;
+
+	FSlateApplication& SlateApp = FSlateApplication::Get();
+
+	PreviousNavigationConfig = SlateApp.GetNavigationConfig();
+	bHasSavedNavigationConfig = PreviousNavigationConfig.IsValid();
+
+	TSharedRef<FNavigationConfig> NavigationConfig =
+		MakeShared<FNavigationConfig>();
+
+	NavigationConfig->KeyEventRules.Empty();
+	NavigationConfig->AnalogHorizontalKey = EKeys::Invalid;
+	NavigationConfig->AnalogVerticalKey = EKeys::Invalid;
+
+	SlateApp.SetNavigationConfig(NavigationConfig);
+}
+
+void UAuraInventoryGridWidget::RestoreSlateNavigation()
+{
+	if (!FSlateApplication::IsInitialized() ||
+		!bHasSavedNavigationConfig ||
+		!PreviousNavigationConfig.IsValid())
+		return;
+
+	FSlateApplication::Get().SetNavigationConfig(
+		PreviousNavigationConfig.ToSharedRef());
+
+	PreviousNavigationConfig.Reset();
+	bHasSavedNavigationConfig = false;
 }
