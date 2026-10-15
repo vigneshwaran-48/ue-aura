@@ -27,6 +27,10 @@
 #include "Inventory/UI/Actions/AuraItemActionMenuWidget.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Framework/Application/NavigationConfig.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
+#include "Inventory/Actions/AuraItemActionGameplayAbility.h"
+#include "Inventory/Actions/AuraItemActionContextObject.h"
 
 void UAuraInventoryGridWidget::NativeConstruct() {
 	Super::NativeConstruct();
@@ -731,13 +735,103 @@ void UAuraInventoryGridWidget::HandleContextMenuActionSelected(
 	FAuraItemHandle ItemHandle,
 	FAuraItemAction Action)
 {
-	UE_LOG(
-		LogTemp,
-		Log,
-		TEXT("Selected action '%s' for item."),
-		*Action.DisplayName.ToString());
+	auto CloseMenu = [this]()
+		{
+			CloseItemActionMenu();
+		};
 
-	CloseItemActionMenu();
+	if (!Action.AbilityClass)
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Cannot execute item action '%s': AbilityClass is null."),
+			*Action.DisplayName.ToString());
+
+		CloseMenu();
+		return;
+	}
+
+	UAuraInventoryComponent* Inventory = GetInventoryComponent();
+
+	if (!Inventory || !Inventory->FindItem(ItemHandle))
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Cannot execute item action: inventory or item is invalid."));
+
+		CloseMenu();
+		return;
+	}
+
+	APawn* Pawn = GetOwningPlayerPawn();
+
+	UAbilitySystemComponent* ASC =
+		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Pawn);
+
+	if (!ASC)
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Cannot execute item action: no AbilitySystemComponent found."));
+
+		CloseMenu();
+		return;
+	}
+
+	UAuraItemActionContextObject* ActionContext =
+		NewObject<UAuraItemActionContextObject>(ASC);
+
+	ActionContext->Inventory = Inventory;
+	ActionContext->ItemHandle = ItemHandle;
+	ActionContext->UIContext = InventoryUIContext;
+
+	FGameplayAbilitySpec AbilitySpec(
+		Action.AbilityClass,
+		1,
+		INDEX_NONE,
+		ActionContext);
+
+	const FGameplayAbilitySpecHandle AbilityHandle =
+		ASC->GiveAbility(AbilitySpec);
+
+	if (!AbilityHandle.IsValid())
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Failed to grant item action '%s'."),
+			*Action.DisplayName.ToString());
+
+		CloseMenu();
+		return;
+	}
+
+	const bool bActivated = ASC->TryActivateAbility(AbilityHandle);
+
+	if (!bActivated)
+	{
+		// The ability never started, so EndAbility won't clean up its spec.
+		ASC->ClearAbility(AbilityHandle);
+
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Failed to activate item action '%s'."),
+			*Action.DisplayName.ToString());
+	}
+	else
+	{
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("Activated item action '%s'."),
+			*Action.DisplayName.ToString());
+	}
+
+	CloseMenu();
 }
 
 void UAuraInventoryGridWidget::HandleContextMenuClosed()

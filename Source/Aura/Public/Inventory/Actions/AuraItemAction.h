@@ -2,10 +2,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "AuraItemAction.generated.h"
 
 class UGameplayAbility;
 class UAuraItemActionCondition;
+class UAuraItemActionGameplayAbility;
 
 USTRUCT(BlueprintType)
 struct AURA_API FAuraItemAction
@@ -16,7 +18,7 @@ struct AURA_API FAuraItemAction
     FText DisplayName;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Action")
-    TSubclassOf<UGameplayAbility> AbilityClass;
+    TSubclassOf<UAuraItemActionGameplayAbility> AbilityClass;
 
     UPROPERTY(
         EditDefaultsOnly,
@@ -24,4 +26,7 @@ struct AURA_API FAuraItemAction
         BlueprintReadOnly,
         Category = "Action")
     TObjectPtr<UAuraItemActionCondition> Condition = nullptr;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+    FGameplayTag InputTag;
 };
