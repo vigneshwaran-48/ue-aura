@@ -43,6 +43,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TObjectPtr<UAuraItemDefinition> ItemDefinition;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment")
+	bool bEquipOnPickup = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Animation")
 	TObjectPtr<UAnimMontage> LeftHandPickupMontage;
 

@@ -120,16 +120,19 @@ void APickupInteractableBase::CompletePickupAndAddToInventory(AActor* Interactor
 
 	if (Result.QuantityAdded > 0)
 	{
-		UAuraEquipmentManagerComponent* EquipmentManager =
-			Interactor->FindComponentByClass<UAuraEquipmentManagerComponent>();
 
-		const UAuraItemFragment_EquippableItem* EquipmentDefinitionFrag =
-			ItemDefinition->FindFragment<UAuraItemFragment_EquippableItem>();
+		if (bEquipOnPickup) {
+			UAuraEquipmentManagerComponent* EquipmentManager =
+				Interactor->FindComponentByClass<UAuraEquipmentManagerComponent>();
 
-		if (EquipmentManager && EquipmentDefinitionFrag)
-		{
-			EquipmentManager->EquipItem(
-				EquipmentDefinitionFrag->EquipmentDefinition);
+			const UAuraItemFragment_EquippableItem* EquipmentDefinitionFrag =
+				ItemDefinition->FindFragment<UAuraItemFragment_EquippableItem>();
+
+			if (EquipmentManager && EquipmentDefinitionFrag)
+			{
+				EquipmentManager->EquipItem(
+					EquipmentDefinitionFrag->EquipmentDefinition);
+			}
 		}
 
 		OnFocusLost(Interactor);
